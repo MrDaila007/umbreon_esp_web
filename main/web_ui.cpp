@@ -558,7 +558,7 @@ for(var i=0;i<pts.length;i++){var px=pts[i].t/4.0*W,py=H-pts[i].v/mV*H;if(i===0)
 x.stroke();
 x.fillStyle='#94a3b8';x.font='10px monospace';x.fillText(mV.toFixed(2)+' m/s',4,12)
 }
-function ptAp(m){var c=m==='imc'?ptIMC:ptPI;if(!c){tt('No results','err');return}S('$SET:SPK='+c.kp+',SKI='+c.ki+',SKD='+(c.kd||'0'));tt('Applied '+m.toUpperCase(),'ok')}
+function ptAp(m){var c=m==='imc'?ptIMC:ptPI;if(!c){tt('No results','err');return}S('$SET:KP='+c.kp+',KI='+c.ki+',KD='+(c.kd||'0'));tt('Applied '+m.toUpperCase(),'ok')}
 function ptDn(){Q('ptSt').textContent='Done';Q('ptPh').textContent='done'}
 function sR(r){var b=Q('R');b.textContent=r===2?'MON':r?'RUN':'STOP';b.className='bg '+(r===2?'mon':r?'run':'stp')}
 function tog(id){

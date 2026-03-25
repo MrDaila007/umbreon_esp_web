@@ -50,6 +50,18 @@ button:active{background:#475569}
 .hid{display:none}
 .cb{font-size:18px;min-width:44px}
 .fs{font-size:11px;color:#64748b}
+#cLog{background:#020617;color:#22d3ee;font-family:monospace;font-size:11px;padding:6px;border-radius:4px;height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #334155}
+#cLog .ct{color:#22d3ee}#cLog .cc{color:#a3e635}#cLog .cs{color:#f59e0b}#cLog .cr{color:#94a3b8}
+.cI{display:flex;gap:4px;margin-top:6px}
+.cI input{flex:1;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:8px;font-family:monospace;font-size:12px}
+.cI input:focus{border-color:#3b82f6;outline:none}
+.cI button{padding:8px 12px}
+.cF{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:center}
+.cF label{font-size:11px;color:#94a3b8}
+.cF select,.cF input[type=text]{background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:4px 6px;font-size:11px}
+.cP{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.cP button{padding:6px 10px;font-size:11px;background:#1e3a5f;border:1px solid #334155}
+.cP button:active{background:#2563eb}
 </style>
 </head>
 <body>
@@ -238,6 +250,46 @@ button:active{background:#475569}
 <button class="bn" onclick="eX()">Stop Motor</button>
 </div>
 <div class="fs" style="margin-top:6px">Slide until wheels just start spinning. Apply to set as MSP.</div>
+</div>
+</section>
+
+<section>
+<h2 id="conH" class="open" onclick="tog('con')">Debug Console</h2>
+<div id="con">
+<div class="cF">
+<label>Filter:</label>
+<select id="cFm" onchange="cFu()">
+<option value="all">All</option>
+<option value="tel">Telemetry only</option>
+<option value="cmd">Commands ($) only</option>
+<option value="sys">System (#) only</option>
+<option value="custom">Custom regex</option>
+</select>
+<input type="text" id="cFr" placeholder="regex..." style="width:120px;display:none" oninput="cFu()">
+<label style="margin-left:8px"><input type="checkbox" id="cAu" checked> Autoscroll</label>
+<label><input type="checkbox" id="cTs" checked> Timestamps</label>
+<button onclick="cCl()" style="margin-left:auto;padding:4px 10px;font-size:11px">Clear</button>
+</div>
+<div id="cLog"></div>
+<div class="cI">
+<input type="text" id="cIn" placeholder="Send command..." onkeydown="if(event.key==='Enter')cSn()">
+<button onclick="cSn()">Send</button>
+</div>
+<div class="cP">
+<button onclick="cSc('$PING')">PING</button>
+<button onclick="cSc('$STATUS')">STATUS</button>
+<button onclick="cSc('$GET')">GET CFG</button>
+<button onclick="cSc('$BAT')">BATTERY</button>
+<button onclick="cSc('#WIFISTATUS')">WiFi</button>
+<button onclick="cSc('$START')" style="background:#15803d">START</button>
+<button onclick="cSc('$STOP')" style="background:#b91c1c">STOP</button>
+<button onclick="cSc('$SAVE')">SAVE</button>
+<button onclick="cSc('$LOAD')">LOAD</button>
+<button onclick="cSc('$RST')">RESET CFG</button>
+<button onclick="cSc('$TEST:lidar')">Test LiDAR</button>
+<button onclick="cSc('$TEST:servo')">Test Servo</button>
+<button onclick="cSc('$TEST:taho')">Test Tacho</button>
+</div>
 </div>
 </section>
 
@@ -551,6 +603,44 @@ setInterval(function(){if(md){md=false;mD()}},200);
 // --- Toast ---
 var ti=null;
 function tt(m,t){var e=Q('T');e.textContent=m;e.className='toast '+(t||'inf')+' show';if(ti)clearTimeout(ti);ti=setTimeout(function(){e.classList.remove('show')},2000)}
+
+// --- Debug Console ---
+var cMx=500,cRx=null,cHs=[];var cHi=-1;
+function cAl(msg,cls){
+var el=Q('cLog');if(!el)return;
+// Filter check
+var fm=Q('cFm').value;
+if(fm==='tel'&&(msg[0]==='$'||msg[0]==='#'))return;
+if(fm==='cmd'&&msg[0]!=='$')return;
+if(fm==='sys'&&msg[0]!=='#')return;
+if(fm==='custom'){var rx=Q('cFr').value;if(rx){try{if(!cRx||cRx._s!==rx){cRx=new RegExp(rx,'i');cRx._s=rx}}catch(e){return}if(!cRx.test(msg))return}}
+var s=document.createElement('span');
+s.className=cls||'cr';
+if(Q('cTs').checked){var d=new Date();s.textContent='['+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2)+'.'+('00'+d.getMilliseconds()).slice(-3)+'] '+msg+'\n'}
+else{s.textContent=msg+'\n'}
+el.appendChild(s);
+while(el.childNodes.length>cMx)el.removeChild(el.firstChild);
+if(Q('cAu').checked)el.scrollTop=el.scrollHeight;
+}
+function cFu(){Q('cFr').style.display=Q('cFm').value==='custom'?'':'none'}
+function cCl(){Q('cLog').innerHTML=''}
+function cSn(){var inp=Q('cIn'),v=inp.value.trim();if(!v)return;S(v);cAl('> '+v,'cc');cHs.push(v);if(cHs.length>50)cHs.shift();cHi=-1;inp.value=''}
+function cSc(c){S(c);cAl('> '+c,'cc')}
+// Arrow key history in console input
+Q('cIn').addEventListener('keydown',function(e){
+if(e.key==='ArrowUp'&&cHs.length){e.preventDefault();if(cHi<0)cHi=cHs.length;cHi--;if(cHi>=0)this.value=cHs[cHi]}
+if(e.key==='ArrowDown'&&cHs.length){e.preventDefault();cHi++;if(cHi>=cHs.length){cHi=-1;this.value=''}else{this.value=cHs[cHi]}}
+});
+
+// Hook into existing ws.onmessage to log all incoming
+var _origPr=pr;
+pr=function(l){
+l=l.trim();if(!l)return;
+if(l[0]==='$')cAl(l,'cs');
+else if(l[0]==='#')cAl(l,'ct');
+else cAl(l,'cr');
+_origPr(l);
+};
 
 cn();
 setInterval(function(){S('$BAT')},5000);

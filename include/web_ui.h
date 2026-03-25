@@ -2,5 +2,8 @@
 
 /* Declaration of the embedded HTML/CSS/JS single-page application.
  * The definition is in main/web_ui.cpp (C++ raw string literal).
- * The string is placed in flash rodata — not in RAM. */
+ * The string is placed in flash rodata — not in RAM.
+ *
+ * Settings panel keys must stay in sync with Zephyr `$CFG:` / `$SET:` (wifi_cmd.c).
+ * Speed-related UI keys include: SPD1, SPD2, SLW (m/s² setpoint slew; 0 = instant). */
 extern const char PAGE_HTML[];

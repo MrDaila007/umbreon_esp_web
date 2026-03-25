@@ -51,7 +51,7 @@ button:active{background:#475569}
 .cb{font-size:18px;min-width:44px}
 .fs{font-size:11px;color:#64748b}
 #cLog{background:#020617;color:#22d3ee;font-family:monospace;font-size:11px;padding:6px;border-radius:4px;height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #334155}
-#cLog .ct{color:#22d3ee}#cLog .cc{color:#a3e635}#cLog .cs{color:#f59e0b}#cLog .cr{color:#94a3b8}
+#cLog .ct{color:#22d3ee}#cLog .cc{color:#a3e635}#cLog .cs{color:#f59e0b}#cLog .cr{color:#94a3b8}#cLog .cl{color:#c084fc}
 .cI{display:flex;gap:4px;margin-top:6px}
 .cI input{flex:1;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:8px;font-family:monospace;font-size:12px}
 .cI input:focus{border-color:#3b82f6;outline:none}
@@ -257,17 +257,15 @@ button:active{background:#475569}
 <h2 id="conH" class="open" onclick="tog('con')">Debug Console</h2>
 <div id="con">
 <div class="cF">
-<label>Filter:</label>
-<select id="cFm" onchange="cFu()">
-<option value="all">All</option>
-<option value="tel">Telemetry only</option>
-<option value="cmd">Commands ($) only</option>
-<option value="sys">System (#) only</option>
-<option value="custom">Custom regex</option>
-</select>
-<input type="text" id="cFr" placeholder="regex..." style="width:120px;display:none" oninput="cFu()">
-<label style="margin-left:8px"><input type="checkbox" id="cAu" checked> Autoscroll</label>
-<label><input type="checkbox" id="cTs" checked> Timestamps</label>
+<label><input type="checkbox" id="cFt" checked> Telemetry</label>
+<label><input type="checkbox" id="cFc" checked> Commands</label>
+<label><input type="checkbox" id="cFs" checked> System</label>
+<label><input type="checkbox" id="cFl" checked> Logs</label>
+<label><input type="checkbox" id="cFx"> Sent</label>
+<input type="text" id="cFr" placeholder="regex filter..." style="width:110px" oninput="cFu()">
+<span style="border-left:1px solid #334155;height:16px;margin:0 4px"></span>
+<label><input type="checkbox" id="cAu" checked> Auto&#8595;</label>
+<label><input type="checkbox" id="cTs" checked> Time</label>
 <button onclick="cCl()" style="margin-left:auto;padding:4px 10px;font-size:11px">Clear</button>
 </div>
 <div id="cLog"></div>
@@ -641,12 +639,16 @@ function tt(m,t){var e=Q('T');e.textContent=m;e.className='toast '+(t||'inf')+' 
 var cMx=500,cRx=null,cHs=[];var cHi=-1;
 function cAl(msg,cls){
 var el=Q('cLog');if(!el)return;
-// Filter check
-var fm=Q('cFm').value;
-if(fm==='tel'&&(msg[0]==='$'||msg[0]==='#'))return;
-if(fm==='cmd'&&msg[0]!=='$')return;
-if(fm==='sys'&&msg[0]!=='#')return;
-if(fm==='custom'){var rx=Q('cFr').value;if(rx){try{if(!cRx||cRx._s!==rx){cRx=new RegExp(rx,'i');cRx._s=rx}}catch(e){return}if(!cRx.test(msg))return}}
+// Checkbox filter: cls = cr(telemetry), cs(command $), ct(system #), cl(log $L:), cc(sent)
+if(cls==='cr'&&!Q('cFt').checked)return;
+if(cls==='cs'&&!Q('cFc').checked)return;
+if(cls==='ct'&&!Q('cFs').checked)return;
+if(cls==='cl'&&!Q('cFl').checked)return;
+if(cls==='cc'&&!Q('cFx').checked)return;
+// Regex filter (applied on top of checkboxes)
+var rx=Q('cFr').value;
+if(rx){try{if(!cRx||cRx._s!==rx){cRx=new RegExp(rx,'i');cRx._s=rx}}catch(e){}
+if(cRx&&!cRx.test(msg))return}
 var s=document.createElement('span');
 s.className=cls||'cr';
 if(Q('cTs').checked){var d=new Date();s.textContent='['+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2)+'.'+('00'+d.getMilliseconds()).slice(-3)+'] '+msg+'\n'}
@@ -655,7 +657,7 @@ el.appendChild(s);
 while(el.childNodes.length>cMx)el.removeChild(el.firstChild);
 if(Q('cAu').checked)el.scrollTop=el.scrollHeight;
 }
-function cFu(){Q('cFr').style.display=Q('cFm').value==='custom'?'':'none'}
+function cFu(){cRx=null} // reset cached regex on input change
 function cCl(){Q('cLog').innerHTML=''}
 function cSn(){var inp=Q('cIn'),v=inp.value.trim();if(!v)return;S(v);cAl('> '+v,'cc');cHs.push(v);if(cHs.length>50)cHs.shift();cHi=-1;inp.value=''}
 function cSc(c){S(c);cAl('> '+c,'cc')}
@@ -670,12 +672,14 @@ var _origPr=pr;
 var cTel=0; // telemetry throttle: only log every Nth line
 pr=function(l){
 l=l.trim();if(!l)return;
-if(l[0]==='$'){
+if(l.indexOf('$L:')===0){
+cAl(l,'cl'); // debug log line
+}else if(l[0]==='$'){
 cAl(l,'cs');
 }else if(l[0]==='#'){
 cAl(l,'ct');
 }else{
-// Telemetry: throttle to avoid flooding console (log every 25th)
+// Telemetry: throttle (every 25th line)
 cTel++;if(cTel%25===0)cAl(l,'cr');
 }
 _origPr(l);

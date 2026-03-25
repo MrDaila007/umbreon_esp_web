@@ -1,27 +1,40 @@
 #include "ws_handshake.h"
 #include "app_config.h"
 
+#ifndef UNIT_TEST
 #include "mbedtls/sha1.h"
 #include "esp_log.h"
+#include <sys/socket.h>
+#include <errno.h>
+#else
+#include "mocks/mock_esp_log.h"
+#endif
 
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <sys/socket.h>
-#include <errno.h>
 
+#ifndef UNIT_TEST
 static const char *TAG = "ws_hs";
+#endif
 
 /* ── Base64 encoder ───────────────────────────────────────────────────────── */
 
-static const char B64_TABLE[] =
+/* When building for unit tests, remove static so test code can call directly */
+#ifdef UNIT_TEST
+#define WS_STATIC
+#else
+#define WS_STATIC static
+#endif
+
+WS_STATIC const char B64_TABLE[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /* Encode `in_len` bytes from `in` into `out` (null-terminated).
  * out_size must be >= ceil(in_len/3)*4 + 1.
  * Returns number of characters written (excluding null), or -1 on overflow. */
-static int base64_encode(const uint8_t *in, size_t in_len,
-                         char *out, size_t out_size)
+WS_STATIC int base64_encode(const uint8_t *in, size_t in_len,
+                            char *out, size_t out_size)
 {
     size_t out_len = ((in_len + 2) / 3) * 4;
     if (out_len + 1 > out_size) return -1;
@@ -49,6 +62,7 @@ static int base64_encode(const uint8_t *in, size_t in_len,
 /* ── recv helpers ─────────────────────────────────────────────────────────── */
 
 /* Read exactly `n` bytes.  Returns n on success, -1 on error/close. */
+#ifndef UNIT_TEST
 static int recv_exact(int fd, uint8_t *buf, int n)
 {
     int received = 0;
@@ -59,10 +73,12 @@ static int recv_exact(int fd, uint8_t *buf, int n)
     }
     return received;
 }
+#endif /* !UNIT_TEST */
 
 /* Read HTTP headers (until \r\n\r\n) with a total timeout.
  * buf is null-terminated on success.
  * Returns length on success, -1 on timeout/overflow/error. */
+#ifndef UNIT_TEST
 static int recv_http_headers(int fd, char *buf, int bufsize)
 {
     /* Use SO_RCVTIMEO for the handshake timeout */
@@ -92,12 +108,13 @@ static int recv_http_headers(int fd, char *buf, int bufsize)
 
     return pos;
 }
+#endif /* !UNIT_TEST */
 
 /* Case-insensitive header value extractor.
  * Finds "Header-Name: value\r\n" and copies value into out (null-terminated).
  * Returns 0 on success, -1 if not found. */
-static int get_header_value(const char *headers, const char *name,
-                            char *out, size_t out_size)
+WS_STATIC int get_header_value(const char *headers, const char *name,
+                               char *out, size_t out_size)
 {
     /* Build search pattern "name:" */
     char pattern[64];
@@ -136,6 +153,7 @@ static int get_header_value(const char *headers, const char *name,
 
 /* ── Public API ───────────────────────────────────────────────────────────── */
 
+#ifndef UNIT_TEST
 int ws_do_handshake(int fd)
 {
     char headers[512];
@@ -197,7 +215,9 @@ int ws_do_handshake(int fd)
     ESP_LOGI(TAG, "WebSocket upgrade OK, fd=%d", fd);
     return 0;
 }
+#endif /* !UNIT_TEST */
 
+#ifndef UNIT_TEST
 int ws_send_text(int fd, const char *text, uint16_t len)
 {
     uint8_t hdr[4];
@@ -314,3 +334,4 @@ int ws_recv_frame(int fd, char *out_buf, uint16_t out_size, uint16_t *out_len)
     *out_len = plen;
     return 0;
 }
+#endif /* !UNIT_TEST */

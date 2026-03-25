@@ -11,7 +11,7 @@ export PATH := $(TOOLCHAIN):$(PATH)
 # ── Serial port ───────────────────────────────────────────────────────────────
 PORT ?= /dev/ttyUSB0
 
-.PHONY: all flash monitor flash-monitor menuconfig size clean
+.PHONY: all flash monitor flash-monitor menuconfig size clean test test-clean
 
 all:
 	$(IDF_PY) build
@@ -33,3 +33,10 @@ size:
 
 clean:
 	$(IDF_PY) fullclean
+
+# ── Host-side unit tests (no hardware needed) ────────────────────────────────
+test:
+	@cmake -B test/build test && cmake --build test/build && test/build/run_tests
+
+test-clean:
+	@rm -rf test/build

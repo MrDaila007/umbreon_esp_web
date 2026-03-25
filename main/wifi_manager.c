@@ -215,6 +215,16 @@ void wifi_manager_init(void)
 #endif
 }
 
+int wifi_manager_get_rssi(void)
+{
+    if (!g_wifi_is_sta) return 0;
+    wifi_ap_record_t ap;
+    if (esp_wifi_sta_get_ap_info(&ap) == ESP_OK) {
+        return ap.rssi;
+    }
+    return 0;
+}
+
 void wifi_manager_get_status(char *buf, size_t buflen)
 {
     char ip_str[16] = "0.0.0.0";
@@ -224,12 +234,14 @@ void wifi_manager_get_status(char *buf, size_t buflen)
         if (tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &info) == ESP_OK) {
             snprintf(ip_str, sizeof(ip_str), IPSTR, IP2STR(&info.ip));
         }
+        int rssi = wifi_manager_get_rssi();
         snprintf(buf, buflen,
                  "# Mode:  STA\r\n"
                  "# SSID:  %s\r\n"
                  "# IP:    %s\r\n"
+                 "# RSSI:  %d\r\n"
                  "# Status: ready\r\n",
-                 s_connected_ssid, ip_str);
+                 s_connected_ssid, ip_str, rssi);
     } else {
         tcpip_adapter_ip_info_t info;
         if (tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_AP, &info) == ESP_OK) {

@@ -55,11 +55,20 @@ static void handle_line(const char *line, uint16_t len)
     dispatch_line(line, len);
 }
 
-/* Drain the command queue and write pending commands to UART */
+/* Drain the command queue and write pending commands to UART.
+ * Some commands are intercepted and handled by the bridge itself. */
 static void drain_cmd_queue(void)
 {
     tcp_cmd_t cmd;
     while (xQueueReceive(g_cmd_queue, &cmd, 0) == pdTRUE) {
+        /* Intercept $RSSI — respond with WiFi signal strength */
+        if (cmd.len == 5 && memcmp(cmd.data, "$RSSI", 5) == 0) {
+            int rssi = wifi_manager_get_rssi();
+            char resp[32];
+            int rlen = snprintf(resp, sizeof(resp), "$RSSI:%d", rssi);
+            dispatch_line(resp, (uint16_t)rlen);
+            continue;
+        }
         uart_write_bytes(UART_NUM, cmd.data, cmd.len);
         uart_write_bytes(UART_NUM, "\r\n", 2);
     }

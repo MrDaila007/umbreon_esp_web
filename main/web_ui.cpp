@@ -72,6 +72,7 @@ button:active{background:#475569}
 <span class="dot off" id="D"></span>
 <span id="W">Connecting</span>
 <span id="nI" style="font-size:11px;color:#64748b;padding:2px 6px;background:#0f172a;border-radius:4px"></span>
+<span id="rssi" style="font-size:11px;font-weight:600;padding:2px 6px;background:#0f172a;border-radius:4px" class="hid"></span>
 <span class="bg stp" id="R">STOP</span>
 <span id="bV" style="font-weight:600" class="hid">--V</span>
 <span style="color:#64748b" id="F">#0</span>
@@ -376,6 +377,7 @@ var m;
 if((m=l.match(/^# SSID:\s*(.+)/)))Q('nI').textContent=m[1].trim();
 else if((m=l.match(/^# IP:\s*(.+)/)))Q('nI').textContent=Q('nI').textContent+' \u2022 '+m[1].trim();
 else if((m=l.match(/^# Mode:\s*(.+)/)))Q('nI').title='Mode: '+m[1].trim();
+else if((m=l.match(/^# RSSI:\s*(-?\d+)/)))uRSSI(parseInt(m[1]));
 return;
 }
 if(l[0]==='$'){
@@ -398,6 +400,7 @@ else if(l.indexOf('$TR:')===0)aL(l);
 else if(l.indexOf('$TDONE:')===0){aL(l);tt('Test done','inf')}
 else if(l.indexOf('$BAT:')===0){var bv=parseFloat(l.slice(5));if(bv>0.5){Q('bV').classList.remove('hid');Q('bV').textContent=bv.toFixed(1)+'V';Q('bV').style.color=bv<6.2?'#ef4444':bv<7.0?'#f59e0b':'#22c55e'}}
 else if(l.indexOf('$TRK:')===0)tP(l.slice(5))
+else if(l.indexOf('$RSSI:')===0)uRSSI(parseInt(l.slice(6)))
 }else{
 var p=l.split(',');
 // Dynamic field count: ms + sn sensors + steer + speed + target [+ yaw + heading]
@@ -692,8 +695,23 @@ cTel++;if(cTel%25===0)cAl(l,'cr');
 _origPr(l);
 };
 
+// --- RSSI display ---
+function uRSSI(r){
+var el=Q('rssi');if(!el||r===0)return;
+el.classList.remove('hid');
+// Signal bars: ▂▄▆█
+var bars,color;
+if(r>-50){bars='\u2582\u2584\u2586\u2588';color='#22c55e'}
+else if(r>-60){bars='\u2582\u2584\u2586\u2007';color='#22c55e'}
+else if(r>-70){bars='\u2582\u2584\u2007\u2007';color='#f59e0b'}
+else if(r>-80){bars='\u2582\u2007\u2007\u2007';color='#ef4444'}
+else{bars='\u2582\u2007\u2007\u2007';color='#991b1b'}
+el.innerHTML='<span style="letter-spacing:-1px">'+bars+'</span> '+r+'dBm';
+el.style.color=color;
+}
+
 cn();
-setInterval(function(){S('$BAT')},5000);
+setInterval(function(){S('$BAT');S('$RSSI')},5000);
 </script>
 </body>
 </html>)rawliteral";

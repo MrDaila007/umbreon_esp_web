@@ -13,3 +13,6 @@ void wifi_manager_init(void);
  *   "# Mode:  STA\r\n# SSID:  ...\r\n# IP:    ...\r\n# Status: ready\r\n"
  * Safe to call from any task after wifi_manager_init() returns. */
 void wifi_manager_get_status(char *buf, size_t buflen);
+
+/* Get current RSSI in dBm. Returns 0 if not in STA mode. */
+int wifi_manager_get_rssi(void);

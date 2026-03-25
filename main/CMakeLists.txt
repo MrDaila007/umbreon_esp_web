@@ -1,0 +1,24 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "wifi_manager.c"
+        "uart_driver.c"
+        "tcp_server.c"
+        "http_server.c"
+        "ws_server.c"
+        "ws_handshake.c"
+        "led_task.c"
+        "web_ui.cpp"
+    INCLUDE_DIRS
+        "."
+        "../include"
+    REQUIRES
+        freertos
+        lwip
+        mbedtls
+        esp8266
+        nvs_flash
+        log
+        tcpip_adapter
+        pthread
+)

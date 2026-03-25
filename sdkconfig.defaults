@@ -1,0 +1,18 @@
+# ── CPU ─────────────────────────────────────────────────────────────────────
+CONFIG_ESP8266_DEFAULT_CPU_FREQ_160=y
+
+# ── lwIP ────────────────────────────────────────────────────────────────────
+# Default is 5; we need: 3 server sockets + up to 4 WS clients + 1 TCP client
+CONFIG_LWIP_MAX_SOCKETS=10
+CONFIG_LWIP_SO_REUSE=y
+CONFIG_LWIP_TCP_KEEPALIVE=y
+
+# ── mbedTLS — SHA-1 is required for WebSocket handshake ────────────────────
+CONFIG_MBEDTLS_SHA1_C=y
+
+# ── Log level ────────────────────────────────────────────────────────────────
+# Keep INFO for development; set to WARN for production
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+
+# ── UART console on UART0 (GPIO1/3) ─────────────────────────────────────────
+CONFIG_CONSOLE_UART_NUM_0=y

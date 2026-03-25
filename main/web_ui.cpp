@@ -14,7 +14,7 @@ header{background:#1e293b;padding:10px 14px;display:flex;align-items:center;just
 .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
 .on{background:#22c55e}.off{background:#ef4444}
 .bg{font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px}
-.run{background:#15803d}.stp{background:#b91c1c}
+.run{background:#15803d}.stp{background:#b91c1c}.mon{background:#a16207}
 section{margin:8px;padding:12px;background:#1e293b;border-radius:8px;border:1px solid #334155}
 h2{font-size:13px;color:#94a3b8;margin-bottom:8px;cursor:pointer;user-select:none}
 h2::before{content:'\25b8 '}h2.open::before{content:'\25be '}
@@ -134,6 +134,7 @@ button:active{background:#475569}
 <div class="bt">
 <button class="bg0" onclick="S('$START')">&#9654; START</button>
 <button class="bn" onclick="S('$STOP')">&#9632; STOP</button>
+<button class="bb" onclick="S('$MONITOR')">&#128065; MONITOR</button>
 <button class="bb" onclick="S('$PING')">PING</button>
 <button onclick="S('$STATUS')">STATUS</button>
 </div>
@@ -163,6 +164,7 @@ button:active{background:#475569}
 <button onclick="mt('esc')">ESC</button>
 <button onclick="mt('speed')">Speed</button>
 <button onclick="mt('autotune')">Tune</button>
+<button onclick="mt('pidtune')">PID Tune</button>
 <button onclick="S('$TEST:reactive')">React</button>
 <button onclick="mt('cal')">Calibrate</button>
 </div>
@@ -171,6 +173,27 @@ button:active{background:#475569}
 <button onclick="Q('log').textContent=''">Clear</button>
 </div>
 <div id="log"></div>
+<div id="pt" class="hid" style="margin-top:8px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+<span style="font-size:12px;color:#94a3b8" id="ptSt">&mdash;</span>
+<span style="font-size:11px;color:#64748b" id="ptPh">idle</span>
+</div>
+<div style="background:#020617;border-radius:4px;border:1px solid #334155;height:120px;position:relative;overflow:hidden">
+<canvas id="ptC" width="400" height="120" style="width:100%;height:100%"></canvas>
+</div>
+<div id="ptR" class="hid" style="margin-top:6px">
+<table style="width:100%;font-size:11px;border-collapse:collapse">
+<thead><tr style="color:#94a3b8"><th style="text-align:left;padding:2px 4px">#</th><th>ESC</th><th>m/s</th><th>K</th><th>L</th><th>&tau;</th></tr></thead>
+<tbody id="ptTb"></tbody>
+</table>
+<div style="margin-top:6px;font-size:12px" id="ptPID"></div>
+<div class="bt" style="margin-top:6px">
+<button class="bb" id="ptAI" onclick="ptAp('imc')">Apply IMC</button>
+<button class="bb" id="ptAP" onclick="ptAp('pi')">Apply PI</button>
+<button onclick="ptAp('imc');S('$SAVE');tt('Saved','ok')">IMC+Save</button>
+</div>
+</div>
+</div>
 </div>
 </section>
 
@@ -393,9 +416,13 @@ else tt('NAK: '+r,'err');
 }
 else if(l.indexOf('$CFG:')===0)pC(l.slice(5));
 else if(l==='$STS:RUN')sR(1);
+else if(l==='$STS:MONITOR')sR(2);
 else if(l==='$STS:STOP')sR(0);
-else if(l.indexOf('$T:')===0)aL(l);
-else if(l.indexOf('$TR:')===0)aL(l);
+else if(l.indexOf('$T:PTUNE')===0){aL(l);ptMsg(l)}
+else if(l.indexOf('$TR:PTUNE')===0||l.indexOf('$TR:IMC')===0||l.indexOf('$TR:PI,')===0){aL(l);ptRes(l)}
+else if(l.indexOf('$T:')===0)aL(l)
+else if(l.indexOf('$TR:')===0)aL(l)
+else if(l.indexOf('$TDONE:pidtune')===0){aL(l);ptDn();tt('PID Tune done','inf')}
 else if(l.indexOf('$TDONE:')===0){aL(l);tt('Test done','inf')}
 else if(l.indexOf('$BAT:')===0){var bv=parseFloat(l.slice(5));if(bv>0.5){Q('bV').classList.remove('hid');Q('bV').textContent=bv.toFixed(1)+'V';Q('bV').style.color=bv<6.2?'#ef4444':bv<7.0?'#f59e0b':'#22c55e'}}
 else if(l.indexOf('$TRK:')===0)tP(l.slice(5))
@@ -498,7 +525,42 @@ else tt('No changes','err');
 
 function mt(n){if(confirm('Motor will spin! OK?'))S('$TEST:'+n)}
 function aL(l){var e=Q('log');e.textContent+=l+'\n';e.scrollTop=e.scrollHeight}
-function sR(r){var b=Q('R');b.textContent=r?'RUN':'STOP';b.className='bg '+(r?'run':'stp')}
+
+// --- PID Tune ---
+var ptD={},ptIMC=null,ptPI=null,ptCurN=0,ptEsc={};
+function ptKV(l){var o={};l.replace(/([\w]+)=([\w.\-\/]+)/g,function(_,k,v){o[k]=v});return o}
+function ptRst(){ptD={};ptIMC=null;ptPI=null;ptCurN=0;ptEsc={};Q('ptTb').innerHTML='';Q('ptPID').innerHTML='';Q('ptR').classList.add('hid')}
+function ptMsg(l){
+var kv=ptKV(l);
+if(kv.phase==='arm'){ptRst();Q('pt').classList.remove('hid');Q('ptSt').textContent='Arming...';Q('ptPh').textContent='arm';return}
+if(kv.phase==='error'){Q('ptSt').textContent='Error: '+(kv.msg||'?');Q('ptPh').textContent='error';return}
+if(kv.phase==='step'){var sp=kv.n.split('/');ptCurN=parseInt(sp[0]);ptEsc[ptCurN]=kv.esc;Q('ptSt').textContent='Step '+kv.n+' (ESC '+kv.esc+')';Q('ptPh').textContent='step '+ptCurN;ptD[ptCurN]=[];var c=Q('ptC'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);return}
+if(kv.v!==undefined&&kv.t!==undefined){var n=parseInt(kv.n);if(!ptD[n])ptD[n]=[];ptD[n].push({t:parseFloat(kv.t),v:parseFloat(kv.v)});ptDrw(ptD[n]);return}
+if(l.indexOf('step_skip')>=0){Q('ptR').classList.remove('hid');Q('ptTb').innerHTML+='<tr style="color:#64748b"><td style="padding:2px 4px">'+(kv.n||'?')+'</td><td colspan=5>skip</td></tr>'}
+}
+function ptRes(l){
+var kv=ptKV(l);
+if(kv.n&&kv.K&&kv.ss){Q('ptR').classList.remove('hid');var e=ptEsc[parseInt(kv.n)]||'';Q('ptTb').innerHTML+='<tr><td style="padding:2px 4px">'+kv.n+'</td><td style="text-align:center">'+e+'</td><td style="text-align:center">'+parseFloat(kv.ss).toFixed(3)+'</td><td style="text-align:center">'+parseFloat(kv.K).toFixed(5)+'</td><td style="text-align:center">'+parseFloat(kv.L).toFixed(2)+'</td><td style="text-align:center">'+parseFloat(kv.tau).toFixed(2)+'</td></tr>';return}
+if(l.indexOf('$TR:IMC')===0){ptIMC={kp:kv.KP,ki:kv.KI,kd:kv.KD};Q('ptPID').innerHTML+='<b>IMC:</b> Kp='+kv.KP+' Ki='+kv.KI+' Kd='+kv.KD+'<br>';return}
+if(l.indexOf('$TR:PI,')===0){ptPI={kp:kv.KP,ki:kv.KI};Q('ptPID').innerHTML+='<b>PI:</b> Kp='+kv.KP+' Ki='+kv.KI+'<br>';return}
+if(kv.ff_esc){Q('ptPID').innerHTML+='<b>FF:</b> '+kv.ff_esc+' &micro;s<br>'}
+}
+function ptDrw(pts){
+if(!pts||pts.length<2)return;
+var c=Q('ptC'),x=c.getContext('2d'),W=c.width,H=c.height;
+x.clearRect(0,0,W,H);
+var mV=0;for(var i=0;i<pts.length;i++)if(pts[i].v>mV)mV=pts[i].v;
+if(mV<0.1)mV=0.1;mV*=1.2;
+x.strokeStyle='#1e293b';x.lineWidth=1;
+for(var g=0;g<=4;g++){var y=H-g*(H/4);x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke()}
+x.strokeStyle='#a3e635';x.lineWidth=2;x.beginPath();
+for(var i=0;i<pts.length;i++){var px=pts[i].t/4.0*W,py=H-pts[i].v/mV*H;if(i===0)x.moveTo(px,py);else x.lineTo(px,py)}
+x.stroke();
+x.fillStyle='#94a3b8';x.font='10px monospace';x.fillText(mV.toFixed(2)+' m/s',4,12)
+}
+function ptAp(m){var c=m==='imc'?ptIMC:ptPI;if(!c){tt('No results','err');return}S('$SET:SPK='+c.kp+',SKI='+c.ki+',SKD='+(c.kd||'0'));tt('Applied '+m.toUpperCase(),'ok')}
+function ptDn(){Q('ptSt').textContent='Done';Q('ptPh').textContent='done'}
+function sR(r){var b=Q('R');b.textContent=r===2?'MON':r?'RUN':'STOP';b.className='bg '+(r===2?'mon':r?'run':'stp')}
 function tog(id){
 Q(id).classList.toggle('hid');Q(id+'H').classList.toggle('open');
 if(id==='map')mOn=!Q('map').classList.contains('hid');

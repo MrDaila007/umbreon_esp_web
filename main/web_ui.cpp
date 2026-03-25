@@ -71,6 +71,7 @@ button:active{background:#475569}
 <div class="hr">
 <span class="dot off" id="D"></span>
 <span id="W">Connecting</span>
+<span id="nI" style="font-size:11px;color:#64748b;padding:2px 6px;background:#0f172a;border-radius:4px"></span>
 <span class="bg stp" id="R">STOP</span>
 <span id="bV" style="font-weight:600" class="hid">--V</span>
 <span style="color:#64748b" id="F">#0</span>
@@ -337,7 +338,7 @@ function Q(id){return document.getElementById(id)}
 
 function cn(){
 ws=new WebSocket('ws://'+location.hostname+':81/');
-ws.onopen=function(){Q('D').className='dot on';Q('W').textContent='Connected'};
+ws.onopen=function(){Q('D').className='dot on';Q('W').textContent='Connected';Q('nI').textContent=location.hostname};
 ws.onclose=function(){Q('D').className='dot off';Q('W').textContent='Reconnecting';setTimeout(cn,2000)};
 ws.onmessage=function(e){pr(e.data)};
 }
@@ -365,10 +366,16 @@ tt('Detected '+n+' sensors','inf');
 // --- Protocol ---
 function pr(l){
 l=l.trim();if(!l)return;
-// Header line — detect sensor count
+// Header / system line
 if(l[0]==='#'){
+// Detect sensor count from CSV header
 var hc=l.split(',');var sc=0;for(var i=0;i<hc.length;i++){if(hc[i].match(/^s\d+$/))sc++}
 if(sc>0)dSn(sc);
+// Parse WiFi status lines into header bar
+var m;
+if((m=l.match(/^# SSID:\s*(.+)/)))Q('nI').textContent=m[1].trim();
+else if((m=l.match(/^# IP:\s*(.+)/)))Q('nI').textContent=Q('nI').textContent+' \u2022 '+m[1].trim();
+else if((m=l.match(/^# Mode:\s*(.+)/)))Q('nI').title='Mode: '+m[1].trim();
 return;
 }
 if(l[0]==='$'){

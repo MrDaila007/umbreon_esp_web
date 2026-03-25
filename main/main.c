@@ -32,12 +32,8 @@ volatile bool        g_wifi_is_sta     = false;
 
 void app_main(void)
 {
-    /* 1. Initialise UART first so boot messages go out immediately */
-    uart_driver_init();
-    uart_send_str("\r\n# -- Umbreon WiFi Bridge (RTOS) --\r\n");
-    uart_send_str("# Board: Wemos D1 Mini / ESP8266 RTOS SDK\r\n");
-
-    /* 2. Create inter-task queues and synchronisation primitives */
+    /* 1. Create inter-task queues BEFORE uart_driver_init() because
+     *    uart_task starts immediately and accesses g_cmd_queue */
     g_line_queue_tcp    = xQueueCreate(Q_LINE_DEPTH, sizeof(uart_line_t));
     g_line_queue_ws     = xQueueCreate(Q_LINE_DEPTH, sizeof(uart_line_t));
     g_cmd_queue         = xQueueCreate(Q_CMD_DEPTH,  sizeof(tcp_cmd_t));
@@ -49,6 +45,11 @@ void app_main(void)
         /* Halt — nothing useful can run without these */
         while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
     }
+
+    /* 2. Initialise UART (starts uart_task which needs queues above) */
+    uart_driver_init();
+    uart_send_str("\r\n# -- Umbreon WiFi Bridge (RTOS) --\r\n");
+    uart_send_str("# Board: Wemos D1 Mini / ESP8266 RTOS SDK\r\n");
 
     /* 3. Start LED task — shows CONNECTING state during WiFi init */
     g_led_state = LED_STATE_CONNECTING;

@@ -104,11 +104,9 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
                 xTimerStart(s_reconnect_timer, 0);
             }
         }
-        /* If s_got_ip_sem has not been given yet, the initial connect failed;
-         * keep retrying until the semaphore-take timeout triggers AP fallback. */
-        else {
-            esp_wifi_connect();
-        }
+        /* During initial connection: do NOT call esp_wifi_connect() here.
+         * The tight disconnect→connect loop triggers WDT.
+         * Let the semaphore timeout in wifi_manager_init() handle AP fallback. */
         break;
 
     case SYSTEM_EVENT_AP_START:

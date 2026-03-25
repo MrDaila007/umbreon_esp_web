@@ -29,7 +29,7 @@
 #define STACK_TCP       3072
 #define STACK_HTTP      3072
 #define STACK_WS        4096
-#define STACK_LED       512
+#define STACK_LED       1024    /* needs room for gpio_config() + ESP_LOG printf */
 
 /* ── FreeRTOS task priorities ──────────────────────────────────────────────── */
 #define PRI_UART        10

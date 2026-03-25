@@ -4,6 +4,7 @@
 #include "wifi_manager.h"
 
 #include "driver/uart.h"
+#include "esp_vfs_dev.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -149,6 +150,10 @@ void uart_driver_init(void)
                                         16,                  /* event queue depth */
                                         &s_uart_event_queue,
                                         0));
+
+    /* Tell VFS to use our driver for UART0 console output.
+     * Without this, ESP_LOG conflicts with uart_driver_install. */
+    esp_vfs_dev_uart_use_driver(UART_NUM);
 
     xTaskCreate(uart_task, "uart", STACK_UART, NULL, PRI_UART, NULL);
     ESP_LOGI(TAG, "UART0 @ %d baud, task started", UART_BAUD);

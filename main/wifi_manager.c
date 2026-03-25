@@ -31,17 +31,36 @@
 #  define CFG_WIFI_MODE CFG_MODE_STA
 #endif
 
-#ifndef STA_SSID
-#  define STA_SSID "YourWiFi"
+/* ── Backward compat: old STA_SSID → STA1_SSID ────────────────────────────── */
+#ifdef STA_SSID
+#  ifndef STA1_SSID
+#    define STA1_SSID STA_SSID
+#  endif
+#  ifndef STA1_PASS
+#    define STA1_PASS STA_PASS
+#  endif
 #endif
-#ifndef STA_PASS
-#  define STA_PASS "YourPassword"
+
+#ifndef STA1_SSID
+#  define STA1_SSID ""
+#endif
+#ifndef STA1_PASS
+#  define STA1_PASS ""
+#endif
+#ifndef STA2_SSID
+#  define STA2_SSID ""
+#endif
+#ifndef STA2_PASS
+#  define STA2_PASS ""
 #endif
 
 static const char *TAG = "wifi";
 
 static SemaphoreHandle_t s_got_ip_sem = NULL;
 static TimerHandle_t     s_reconnect_timer = NULL;
+
+/* Track which SSID we're connected to (for status report) */
+static const char *s_connected_ssid = "";
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 
@@ -57,7 +76,6 @@ static void start_ap(void)
             .beacon_interval = 100,
         },
     };
-    /* If no password configured, open AP */
     if (strlen(AP_PASS) == 0) {
         ap_cfg.ap.authmode = WIFI_AUTH_OPEN;
     }
@@ -67,7 +85,37 @@ static void start_ap(void)
     ESP_ERROR_CHECK(esp_wifi_start());
 
     g_wifi_is_sta = false;
+    s_connected_ssid = AP_SSID;
     ESP_LOGI(TAG, "AP started: SSID=%s", AP_SSID);
+}
+
+/* Try connecting to a single STA network.
+ * Returns true if connected within timeout_ms. */
+static bool try_sta_connect(const char *ssid, const char *pass, uint32_t timeout_ms)
+{
+    if (ssid[0] == '\0') return false; /* skip empty SSID */
+
+    ESP_LOGI(TAG, "Trying STA: %s (%lums)", ssid, (unsigned long)timeout_ms);
+
+    wifi_config_t sta_cfg = { 0 };
+    strncpy((char *)sta_cfg.sta.ssid,     ssid, sizeof(sta_cfg.sta.ssid) - 1);
+    strncpy((char *)sta_cfg.sta.password, pass,  sizeof(sta_cfg.sta.password) - 1);
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &sta_cfg));
+    ESP_ERROR_CHECK(esp_wifi_start());
+    /* SYSTEM_EVENT_STA_START fires → esp_wifi_connect() called in handler */
+
+    bool ok = (xSemaphoreTake(s_got_ip_sem, pdMS_TO_TICKS(timeout_ms)) == pdTRUE);
+    if (ok) {
+        s_connected_ssid = ssid;
+        g_wifi_is_sta = true;
+        ESP_LOGI(TAG, "Connected to %s", ssid);
+    } else {
+        ESP_LOGW(TAG, "Timeout connecting to %s", ssid);
+        esp_wifi_stop();
+    }
+    return ok;
 }
 
 static void reconnect_timer_cb(TimerHandle_t t)
@@ -99,14 +147,13 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
 
     case SYSTEM_EVENT_STA_DISCONNECTED:
         if (g_wifi_is_sta) {
-            /* Connection was established, now lost — schedule reconnect */
+            /* Was connected, now lost — schedule reconnect */
             if (s_reconnect_timer) {
                 xTimerStart(s_reconnect_timer, 0);
             }
         }
-        /* During initial connection: do NOT call esp_wifi_connect() here.
-         * The tight disconnect→connect loop triggers WDT.
-         * Let the semaphore timeout in wifi_manager_init() handle AP fallback. */
+        /* During initial connection: don't reconnect here.
+         * Semaphore timeout in try_sta_connect() handles fallback. */
         break;
 
     case SYSTEM_EVENT_AP_START:
@@ -146,25 +193,16 @@ void wifi_manager_init(void)
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
 #if CFG_WIFI_MODE == CFG_MODE_STA
-    /* ── STA mode with AP fallback ───────────────────────────────────────── */
+    /* ── STA mode: try STA1 → STA2 → AP fallback ──────────────────────── */
     s_got_ip_sem = xSemaphoreCreateBinary();
 
-    wifi_config_t sta_cfg = { 0 };
-    strncpy((char *)sta_cfg.sta.ssid,     STA_SSID, sizeof(sta_cfg.sta.ssid) - 1);
-    strncpy((char *)sta_cfg.sta.password, STA_PASS,  sizeof(sta_cfg.sta.password) - 1);
-
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &sta_cfg));
-    ESP_ERROR_CHECK(esp_wifi_start());
-    /* SYSTEM_EVENT_STA_START fires → esp_wifi_connect() is called in handler */
-
-    ESP_LOGI(TAG, "Connecting to STA: %s (timeout %dms)", STA_SSID, STA_TIMEOUT_MS);
-
-    bool connected = (xSemaphoreTake(s_got_ip_sem,
-                                     pdMS_TO_TICKS(STA_TIMEOUT_MS)) == pdTRUE);
+    bool connected = try_sta_connect(STA1_SSID, STA1_PASS, STA_TIMEOUT_MS);
     if (!connected) {
-        ESP_LOGW(TAG, "STA timeout — falling back to AP mode");
-        ESP_ERROR_CHECK(esp_wifi_stop());
+        connected = try_sta_connect(STA2_SSID, STA2_PASS, STA_TIMEOUT_MS);
+    }
+
+    if (!connected) {
+        ESP_LOGW(TAG, "All STA networks failed — starting AP");
         start_ap();
     } else {
         /* Set up reconnect timer for future disconnections */
@@ -191,7 +229,7 @@ void wifi_manager_get_status(char *buf, size_t buflen)
                  "# SSID:  %s\r\n"
                  "# IP:    %s\r\n"
                  "# Status: ready\r\n",
-                 STA_SSID, ip_str);
+                 s_connected_ssid, ip_str);
     } else {
         tcpip_adapter_ip_info_t info;
         if (tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_AP, &info) == ESP_OK) {

@@ -43,7 +43,7 @@
 #define Q_CMD_DEPTH     4   /* tcp_cmd_t items in command queue      */
 
 /* ── WiFi timing (ms) ──────────────────────────────────────────────────────── */
-#define STA_TIMEOUT_MS  30000
+#define STA_TIMEOUT_MS  15000   /* per-network; worst case = 2 × 15s + AP */
 #define RECONNECT_MS    5000
 
 /* ── LED timing (ms) ───────────────────────────────────────────────────────── */

@@ -41,7 +41,13 @@ extern QueueHandle_t g_cmd_queue;       /* tcp_cmd_t,   depth Q_CMD_DEPTH  */
 /* WebSocket client registry mutex */
 extern SemaphoreHandle_t g_ws_clients_mutex;
 
-/* LED state (volatile — written by any task, read by led_task) */
+/*
+ * Volatile globals below are accessed by multiple FreeRTOS tasks without mutex.
+ * Safe on ESP8266 (single-core Xtensa LX106): word-sized stores are atomic,
+ * no read-modify-write sequences.
+ *
+ * If porting to multi-core (ESP32, RP2350): add mutex or stdatomic.
+ */
 extern volatile led_state_t g_led_state;
 extern volatile uint32_t    g_last_uart_rx_ms;  /* xTaskGetTickCount()*portTICK_PERIOD_MS */
 

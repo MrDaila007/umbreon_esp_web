@@ -210,14 +210,14 @@ Intentional: UART task must not block on slow network consumers. Queue depth of 
 
 ## 7. Recommendations Summary
 
-| Priority | Finding | Action |
-|----------|---------|--------|
-| 1 (Critical) | S-1: Credentials in source | Verify `.gitignore`, scrub git history if needed |
-| 2 (High) | E-1: Unchecked `send()` | Add return check in `http_server.c:96` |
-| 3 (Medium) | S-2: No auth | Add shared-secret for WS/TCP if used on shared networks |
-| 4 (Medium) | C-1/C-2: Volatile globals | Add mutex if porting to multi-core; acceptable on ESP8266 |
-| 5 (Low) | S-3: HTTP serves any request | Optional: check request method |
-| 6 (Low) | E-2: Silent overflow | Optional: send `# DATA LOSS` marker to clients |
+| Priority | Finding | Action | Status |
+|----------|---------|--------|--------|
+| 1 (Critical) | S-1: Credentials in source | Verify `.gitignore`, scrub git history if needed | **CLOSED** — `.gitignore` verified, history clean, `wifi_config_example.h` exists |
+| 2 (High) | E-1: Unchecked `send()` | Add return check in `http_server.c:96` | **CLOSED** — return check added, close+skip on failure |
+| 3 (Medium) | S-2: No auth | Add shared-secret for WS/TCP if used on shared networks | ACCEPTED — isolated competition WiFi |
+| 4 (Medium) | C-1/C-2: Volatile globals | Add mutex if porting to multi-core; acceptable on ESP8266 | **CLOSED** — safety comment added with multi-core porting caveat |
+| 5 (Low) | S-3: HTTP serves any request | Optional: check request method | **CLOSED** — GET validation + 405 response added |
+| 6 (Low) | E-2: Silent overflow | Optional: send `# DATA LOSS` marker to clients | **CLOSED** — `# DATA_LOSS` marker dispatched to both queues |
 
 ---
 

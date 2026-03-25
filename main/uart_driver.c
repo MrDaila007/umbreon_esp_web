@@ -125,6 +125,7 @@ static void uart_task(void *arg)
             uart_flush_input(UART_NUM);
             xQueueReset(s_uart_event_queue);
             s_uart_pos = 0;
+            dispatch_line("# DATA_LOSS", 11);
             break;
 
         case UART_FRAME_ERR:

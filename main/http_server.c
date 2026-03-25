@@ -16,28 +16,37 @@ static const char *TAG = "http";
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 
-/* Read and discard HTTP request headers until blank line or timeout (3s). */
-static void drain_request(int fd)
+/* Read HTTP request headers into caller's buffer until blank line or timeout.
+ * Returns bytes read, or -1 on error/timeout with no data. */
+static int read_request(int fd, char *buf, size_t buf_size)
 {
     struct timeval tv = { .tv_sec = 3, .tv_usec = 0 };
     setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
-    char buf[256];
     int pos = 0;
     while (1) {
-        int n = recv(fd, buf + pos, sizeof(buf) - 1 - pos, 0);
-        if (n <= 0) break;
+        int n = recv(fd, buf + pos, (int)(buf_size - 1) - pos, 0);
+        if (n <= 0) { pos = (pos > 0) ? pos : -1; break; }
         pos += n;
         if (pos >= 4) {
             buf[pos] = '\0';
             if (strstr(buf, "\r\n\r\n") || strstr(buf, "\n\n")) break;
         }
-        if (pos >= (int)sizeof(buf) - 1) break; /* buffer full — stop */
+        if (pos >= (int)buf_size - 1) break;
     }
+    if (pos > 0) buf[pos] = '\0';
 
     tv.tv_sec = 0;
     setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    return pos;
 }
+
+static const char RESP_405[] =
+    "HTTP/1.1 405 Method Not Allowed\r\n"
+    "Allow: GET\r\n"
+    "Content-Length: 0\r\n"
+    "Connection: close\r\n"
+    "\r\n";
 
 /* ── Server task ──────────────────────────────────────────────────────────── */
 
@@ -82,7 +91,15 @@ static void http_server_task(void *arg)
         int nd = 1;
         setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, &nd, sizeof(nd));
 
-        drain_request(client_fd);
+        char req[256];
+        int req_len = read_request(client_fd, req, sizeof(req));
+
+        /* Reject non-GET methods */
+        if (req_len < 4 || memcmp(req, "GET ", 4) != 0) {
+            send(client_fd, RESP_405, sizeof(RESP_405) - 1, 0);
+            close(client_fd);
+            continue;
+        }
 
         /* Send HTTP response header */
         char hdr[128];
@@ -93,7 +110,10 @@ static void http_server_task(void *arg)
             "Connection: close\r\n"
             "\r\n",
             (unsigned)page_len);
-        send(client_fd, hdr, hdr_len, 0);
+        if (send(client_fd, hdr, hdr_len, 0) < 0) {
+            close(client_fd);
+            continue;
+        }
 
         /* Stream PAGE_HTML in chunks to avoid blocking for 25KB at once */
         const char *p = PAGE_HTML;

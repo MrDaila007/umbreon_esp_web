@@ -139,9 +139,12 @@ static void tcp_server_task(void *arg)
                 }
             }
 
-            /* Drain broadcast queue — send telemetry to client */
+            /* Drain broadcast queue — send only debug/status lines,
+             * skip raw sensor telemetry (lines starting with a digit). */
             uart_line_t msg;
             while (xQueueReceive(g_line_queue_tcp, &msg, 0) == pdTRUE) {
+                if (msg.len > 0 && msg.data[0] >= '0' && msg.data[0] <= '9')
+                    continue;
                 tcp_send(client_fd, msg.data, msg.len);
                 tcp_send(client_fd, "\r\n", 2);
             }

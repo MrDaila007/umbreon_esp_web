@@ -375,7 +375,6 @@ if(sc>0)dSn(sc);
 // Parse WiFi status lines into header bar
 var m;
 if((m=l.match(/^# SSID:\s*(.+)/)))Q('nI').textContent=m[1].trim();
-else if((m=l.match(/^# IP:\s*(.+)/)))Q('nI').textContent=Q('nI').textContent+' \u2022 '+m[1].trim();
 else if((m=l.match(/^# Mode:\s*(.+)/)))Q('nI').title='Mode: '+m[1].trim();
 else if((m=l.match(/^# RSSI:\s*(-?\d+)/)))uRSSI(parseInt(m[1]));
 return;

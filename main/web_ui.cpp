@@ -455,14 +455,14 @@ if(mOn)mU(parseInt(p[0]),sv,parseInt(p[si]),parseFloat(p[si+1]),yw,hi);
 var LB={FOD:'Front Obstacle',SOD:'Side Open',ACD:'All Close',CFD:'Close Front',
 KP:'PID Kp',KI:'PID Ki',KD:'PID Kd',MSP:'Min Spd \u00b5s',XSP:'Max Spd \u00b5s',BSP:'Min Rev \u00b5s',
 MNP:'Min Steer',XNP:'Max Steer',NTP:'Neutral',ENH:'Enc Holes',WDM:'Wheel Diam',
-LMS:'Loop ms',SPD1:'Spd Clear',SPD2:'Spd Block',SLW:'Spd Slew',COE1:'Coef Clear',COE2:'Coef Block',
+LMS:'Loop ms',SPD1:'Spd Clear',SPD2:'Spd Block',SLW:'Spd Slew',KOP:'Kick %',KOM:'Kick ms',COE1:'Coef Clear',COE2:'Coef Block',
 WDD:'Wrong Dir',RCW:'Race CW',STK:'Stuck Thr',IMR:'IMU Rot',SVR:'Srv Rev',CAL:'Calibrated',BEN:'Bat Monitor',BML:'Bat Mult',BLV:'Bat Low V',IMU:'IMU',DBG:'Debug',SNS:'Sensors',SMX:'Max Range'};
 var FL={KP:1,KI:1,KD:1,WDM:1,SPD1:1,SPD2:1,SLW:1,COE1:1,COE2:1,WDD:1,BML:1,BLV:1};
 var BL={RCW:1,IMR:1,SVR:1,CAL:1,BEN:1,IMU:1,DBG:1};
 var RO={IMU:1,DBG:1,SNS:1,SMX:1},OR={};
 var GR=[
 ['\u26a0 Obstacles','FOD','SOD','ACD','CFD'],
-['\u23f1 Speed','SPD1','SPD2','SLW','MSP','XSP','BSP'],
+['\u23f1 Speed','SPD1','SPD2','SLW','KOP','KOM','MSP','XSP','BSP'],
 ['\u2699 PID','KP','KI','KD'],
 ['\u21c4 Steering','MNP','XNP','NTP','COE1','COE2'],
 ['\u23f2 Loop','LMS','STK','WDD'],

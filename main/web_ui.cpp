@@ -275,20 +275,53 @@ button:active{background:#475569}
 <input type="text" id="cIn" placeholder="Send command..." onkeydown="if(event.key==='Enter')cSn()">
 <button onclick="cSn()">Send</button>
 </div>
+<div style="font-size:11px;color:#64748b;margin-top:6px">Control</div>
 <div class="cP">
 <button onclick="cSc('$PING')">PING</button>
 <button onclick="cSc('$STATUS')">STATUS</button>
-<button onclick="cSc('$GET')">GET CFG</button>
-<button onclick="cSc('$BAT')">BATTERY</button>
-<button onclick="cSc('#WIFISTATUS')">WiFi</button>
 <button onclick="cSc('$START')" style="background:#15803d">START</button>
 <button onclick="cSc('$STOP')" style="background:#b91c1c">STOP</button>
+<button onclick="cSc('$BAT')">BATTERY</button>
+</div>
+<div style="font-size:11px;color:#64748b;margin-top:6px">Diagnostics</div>
+<div class="cP">
+<button onclick="cSc('$DIAG')">DIAG</button>
+<button onclick="cSc('$SNS')">SENSORS</button>
+<button onclick="cSc('$IMU')">IMU</button>
+<button onclick="cSc('$PID')">PID</button>
+<button onclick="cSc('$SYS')">SYS INFO</button>
+<button onclick="cSc('$LOG:ON')">Log ON</button>
+<button onclick="cSc('$LOG:OFF')">Log OFF</button>
+<button onclick="cSc('$HELP')">HELP</button>
+</div>
+<div style="font-size:11px;color:#64748b;margin-top:6px">Settings</div>
+<div class="cP">
+<button onclick="cSc('$GET')">GET CFG</button>
 <button onclick="cSc('$SAVE')">SAVE</button>
 <button onclick="cSc('$LOAD')">LOAD</button>
-<button onclick="cSc('$RST')">RESET CFG</button>
-<button onclick="cSc('$TEST:lidar')">Test LiDAR</button>
-<button onclick="cSc('$TEST:servo')">Test Servo</button>
-<button onclick="cSc('$TEST:taho')">Test Tacho</button>
+<button onclick="cSc('$RST')">RESET</button>
+</div>
+<div style="font-size:11px;color:#64748b;margin-top:6px">Tests</div>
+<div class="cP">
+<button onclick="cSc('$TEST:lidar')">LiDAR</button>
+<button onclick="cSc('$TEST:servo')">Servo</button>
+<button onclick="cSc('$TEST:taho')">Tacho</button>
+<button onclick="cSc('$TEST:reactive')">Reactive</button>
+<button onclick="if(confirm('Motor test — ESC will spin!'))cSc('$TEST:esc')">ESC ⚠</button>
+<button onclick="if(confirm('Motor test — wheels will spin!'))cSc('$TEST:speed')">Speed ⚠</button>
+<button onclick="if(confirm('Autotune — car will drive!'))cSc('$TEST:autotune')">Autotune ⚠</button>
+<button onclick="if(confirm('Calibration — ESC will arm!'))cSc('$TEST:cal')">Calibrate ⚠</button>
+</div>
+<div style="font-size:11px;color:#64748b;margin-top:6px">Track</div>
+<div class="cP">
+<button onclick="cSc('$TRK:STATUS')">Track Status</button>
+<button onclick="cSc('$TRK:START')">Learn</button>
+<button onclick="cSc('$TRK:STOP')">Stop Learn</button>
+<button onclick="cSc('$TRK:SAVE')">Save Track</button>
+<button onclick="cSc('$TRK:LOAD')">Load Track</button>
+<button onclick="cSc('$TRK:RACE')">RACE</button>
+<button onclick="cSc('$TRK:GET')">Download</button>
+<button onclick="cSc('$TRK:CLEAR')">Clear</button>
 </div>
 </div>
 </section>
@@ -634,11 +667,17 @@ if(e.key==='ArrowDown'&&cHs.length){e.preventDefault();cHi++;if(cHi>=cHs.length)
 
 // Hook into existing ws.onmessage to log all incoming
 var _origPr=pr;
+var cTel=0; // telemetry throttle: only log every Nth line
 pr=function(l){
 l=l.trim();if(!l)return;
-if(l[0]==='$')cAl(l,'cs');
-else if(l[0]==='#')cAl(l,'ct');
-else cAl(l,'cr');
+if(l[0]==='$'){
+cAl(l,'cs');
+}else if(l[0]==='#'){
+cAl(l,'ct');
+}else{
+// Telemetry: throttle to avoid flooding console (log every 25th)
+cTel++;if(cTel%25===0)cAl(l,'cr');
+}
 _origPr(l);
 };
 

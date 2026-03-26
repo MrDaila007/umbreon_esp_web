@@ -33,7 +33,7 @@ jobs:
           eval "$(python3 "${IDF_PATH}/tools/idf_tools.py" export)" || exit 1
           for _py in python python3; do
             _p="$(command -v "${_py}" 2>/dev/null)" || continue
-            "${_p}" -m pip install -q -U setuptools pip || true
+            "${_p}" -m pip install -q -U pip 'setuptools>=69,<82' || true
           done
           source "${IDF_PATH}/export.sh"
           make all

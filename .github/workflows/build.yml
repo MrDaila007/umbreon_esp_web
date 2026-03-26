@@ -30,12 +30,11 @@ jobs:
           set -eo pipefail
           export IDF_PATH="${HOME}/ESP8266_RTOS_SDK"
           set +u
-          if [ -d "${HOME}/.espressif/python_env" ]; then
-            idf_pyenv="$(find "${HOME}/.espressif/python_env" -maxdepth 1 -name 'rtos*_py*_env' -type d | head -1)"
-            if [ -n "${idf_pyenv}" ] && [ -x "${idf_pyenv}/bin/python3" ]; then
-              "${idf_pyenv}/bin/python3" -m pip install -q -U setuptools pip
-            fi
-          fi
+          eval "$(python3 "${IDF_PATH}/tools/idf_tools.py" export)" || exit 1
+          for _py in python python3; do
+            _p="$(command -v "${_py}" 2>/dev/null)" || continue
+            "${_p}" -m pip install -q -U setuptools pip || true
+          done
           source "${IDF_PATH}/export.sh"
           make all
           echo "ESP_BIN=${GITHUB_WORKSPACE}/build/umbreon_esp_web.bin" >> "$GITHUB_ENV"

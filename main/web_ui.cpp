@@ -99,6 +99,21 @@ button:active{background:#475569}
 </div>
 </section>
 
+<section id="runSec" class="hid">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="font-size:11px;color:#94a3b8;font-weight:600">STATE</span>
+<span id="runSt" style="font-size:13px;font-weight:700;padding:3px 10px;border-radius:4px;background:#15803d;color:#fff">CLEAR</span>
+<span class="l" style="font-size:11px;color:#64748b">Stuck</span>
+<span class="v" id="runSk" style="font-size:13px;font-weight:600;min-width:28px">0</span>
+<span class="l" style="font-size:11px;color:#64748b">Turns</span>
+<span class="v" id="runTn" style="font-size:13px;font-weight:600;min-width:44px">0.0&deg;</span>
+<span class="l" style="font-size:11px;color:#64748b">Clear</span>
+<span class="v" id="runHc" style="font-size:13px;font-weight:600;min-width:28px">0/2</span>
+<span class="l" style="font-size:11px;color:#64748b">Diff</span>
+<span class="v" id="runDf" style="font-size:13px;font-weight:600;min-width:44px">0</span>
+</div>
+</section>
+
 <section>
 <h2 id="mapH" class="open" onclick="tog('map')">Track Map</h2>
 <div id="map">
@@ -426,6 +441,7 @@ else if(l.indexOf('$TDONE:pidtune')===0){aL(l);ptDn();tt('PID Tune done','inf')}
 else if(l.indexOf('$TDONE:')===0){aL(l);tt('Test done','inf')}
 else if(l.indexOf('$BAT:')===0){var bv=parseFloat(l.slice(5));if(bv>0.5){Q('bV').classList.remove('hid');Q('bV').textContent=bv.toFixed(1)+'V';Q('bV').style.color=bv<6.2?'#ef4444':bv<7.0?'#f59e0b':'#22c55e'}}
 else if(l.indexOf('$TRK:')===0)tP(l.slice(5))
+else if(l.indexOf('$RUN:')===0)pRUN(l.slice(5))
 else if(l.indexOf('$RSSI:')===0)uRSSI(parseInt(l.slice(6)))
 }else{
 var p=l.split(',');
@@ -450,6 +466,19 @@ var hi=p.length>=sn+6,yw=0;
 if(hi){yw=parseFloat(p[si+3]);Q('iR').classList.remove('hid');Q('yw').textContent=yw.toFixed(1)+'\u00b0/s';Q('hd').textContent=parseFloat(p[si+4]).toFixed(1)+'\u00b0'}
 if(mOn)mU(parseInt(p[0]),sv,parseInt(p[si]),parseFloat(p[si+1]),yw,hi);
 }}}
+
+// --- RUN sub-state ---
+var RS_N=['CLEAR','BLOCKED','STUCK','REVERSE','WRONG_DIR'];
+var RS_B=['#15803d','#a16207','#c2410c','#b91c1c','#991b1b'];
+function pRUN(d){
+var p=d.split(',');if(p.length<5)return;
+var st=parseInt(p[0]),sk=parseInt(p[1]),tn=parseFloat(p[2]),hc=parseInt(p[3]),df=parseInt(p[4]);
+var el=Q('runSt');if(el){el.textContent=RS_N[st]||'?';el.style.background=RS_B[st]||'#334155'}
+var se=Q('runSk');if(se)se.textContent=sk;
+var te=Q('runTn');if(te)te.textContent=tn.toFixed(1)+'\u00b0';
+var he=Q('runHc');if(he)he.textContent=hc+'/2';
+var de=Q('runDf');if(de)de.textContent=df;
+}
 
 // --- Settings ---
 var LB={FOD:'Front Obstacle',SOD:'Side Open',ACD:'All Close',CFD:'Close Front',
@@ -560,7 +589,7 @@ x.fillStyle='#94a3b8';x.font='10px monospace';x.fillText(mV.toFixed(2)+' m/s',4,
 }
 function ptAp(m){var c=m==='imc'?ptIMC:ptPI;if(!c){tt('No results','err');return}S('$SET:KP='+c.kp+',KI='+c.ki+',KD='+(c.kd||'0'));tt('Applied '+m.toUpperCase(),'ok')}
 function ptDn(){Q('ptSt').textContent='Done';Q('ptPh').textContent='done'}
-function sR(r){var b=Q('R');b.textContent=r===2?'MON':r?'RUN':'STOP';b.className='bg '+(r===2?'mon':r?'run':'stp')}
+function sR(r){var b=Q('R');b.textContent=r===2?'MON':r?'RUN':'STOP';b.className='bg '+(r===2?'mon':r?'run':'stp');var rs=Q('runSec');if(rs){if(r===1)rs.classList.remove('hid');else rs.classList.add('hid')}}
 function tog(id){
 Q(id).classList.toggle('hid');Q(id+'H').classList.toggle('open');
 if(id==='map')mOn=!Q('map').classList.contains('hid');

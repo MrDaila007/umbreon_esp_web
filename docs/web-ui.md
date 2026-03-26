@@ -40,13 +40,19 @@ Also shows current speed, steering angle, and target values.
 
 ### Settings
 
-GUI for reading and writing PID and drive parameters:
+Expanded by default (click the **Settings** header to collapse). After **Read**
+(`$GET`), fields are grouped (obstacles, speed, PID, steering, loop, encoder,
+**battery**, flags, sensor meta).
 
-- **KP, KI, KD**: PID controller gains
-- **MSP**: Max speed
-- Other configurable parameters
+Notable keys:
 
-Workflow: Read current values (`$GET`), modify in UI, write back (`$SET:...`), save to flash (`$SAVE`).
+- **SPD1 / SPD2 / SLW** — cruise speeds (m/s) and setpoint slew (m/s per second; `0` = instant)
+- **KOP / KOM** — start kick (% of ESC span / ms; `KOP=0` off)
+- **MSP / XSP / BSP** — ESC µs limits
+- **KP / KI / KD** — speed PID
+- **⚡ Battery** — **BEN** (monitor on/off), **BML**, **BLV**
+
+Workflow: **Read** → edit → **Write** (`$SET:...`) → **Save EE** (`$SAVE`) on the Pico.
 
 ### Calibration
 
@@ -64,11 +70,13 @@ Hardware test buttons:
 |------|---------|-------------|
 | LiDAR | `$TEST:lidar` | Distance sensor test |
 | Servo | `$TEST:servo` | Steering servo test |
-| Tacho | `$TEST:speed` | Speed sensor test |
+| Tacho | `$TEST:taho` | Tachometer test |
 | ESC | `$TEST:esc` | Motor controller test |
-| Speed | `$TEST:speed` | Speed control test |
-| Autotune | `$TEST:autotune` | PID autotune |
-| Reactive | `$TEST:cal` | Reactive test |
+| Speed | `$TEST:speed` | PID speed hold test |
+| Autotune | `$TEST:autotune` | PID autotune (wheels up) |
+| PID Tune | `$TEST:pidtune` | On-track step ID + IMC/PI suggestions |
+| Reactive | `$TEST:reactive` | Reactive steering test |
+| Calibrate | `$TEST:cal` | ESC calibration |
 
 ### Manual Drive
 

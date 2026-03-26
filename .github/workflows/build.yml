@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ── Host unit tests (CMake + Unity, no ESP8266 SDK) ───────────────────────
+  test-host:
+    runs-on: [self-hosted, linux, embedded]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run host unit tests
+        run: make test
+
+  # ── Firmware — ESP8266 RTOS SDK и toolchain на runner (см. docs/building.md) ─
+  build:
+    runs-on: [self-hosted, linux, embedded]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build firmware
+        run: |
+          set -euo pipefail
+          source "${HOME}/ESP8266_RTOS_SDK/export.sh"
+          make all
+          echo "ESP_BIN=${GITHUB_WORKSPACE}/build/umbreon_esp_web.bin" >> "$GITHUB_ENV"
+
+      - name: Upload firmware binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-bin
+          path: ${{ env.ESP_BIN }}

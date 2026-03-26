@@ -49,6 +49,10 @@ make monitor    # Serial monitor @ 74880 baud
 make test       # Host-side unit tests (no hardware needed)
 ```
 
+### CI
+
+Self-hosted GitHub Actions (labels `self-hosted`, `linux`, `embedded`) — см. [`.github/workflows/build.yml`](.github/workflows/build.yml) и [docs/building.md](docs/building.md#ci-self-hosted).
+
 ## Project Structure
 
 ```

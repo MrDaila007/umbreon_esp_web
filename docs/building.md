@@ -23,6 +23,12 @@ cd ~/ESP8266_RTOS_SDK
 source export.sh
 ```
 
+On Ubuntu 24.04+, if `./install.sh` fails with **`/usr/bin/env: 'python': No such file or directory`**, install a `python` shim: **`sudo apt install python-is-python3`**, or run `./install.sh` with an activated Python venv (venv’s `bin/python` satisfies scripts that call `python`).
+
+If **`git describe --tags` / exit 128 / "No names found"** after a **shallow** clone (`--depth 1`), run **`git fetch --unshallow`** and **`git fetch --tags`**, then `./install.sh` again — or clone the SDK **without** `--depth 1`.
+
+If **`pip install --user virtualenv` / "Can not perform a '--user' install"** while a **venv is active**: run **`pip install virtualenv`** inside that venv before `./install.sh`, or **`deactivate`** and install **`python3-virtualenv`** (`apt`) for system Python, then run `./install.sh` without the SDK venv activated.
+
 The toolchain is installed at `~/.espressif/tools/xtensa-lx106-elf/`.
 
 ## WiFi Configuration
@@ -153,3 +159,11 @@ Make sure the SDK environment is sourced:
 export IDF_PATH=~/ESP8266_RTOS_SDK
 source $IDF_PATH/export.sh
 ```
+
+## CI (self-hosted)
+
+Workflow [`.github/workflows/build.yml`](../.github/workflows/build.yml) использует тот же self-hosted runner, что и прошивка Pico (`runs-on: [self-hosted, linux, embedded]`).
+
+На машине раннера должны быть установлены **ESP8266 RTOS SDK** и **Xtensa toolchain** по разделу [Prerequisites](#prerequisites) выше: каталог `~/ESP8266_RTOS_SDK`, `./install.sh` из SDK, чтобы `Makefile` находил `idf.py` и `~/.espressif/tools/xtensa-lx106-elf/...`. Job `test-host` ( `make test` ) нужен только `cmake` и компилятор хоста; job `build` вызывает `make all`.
+
+Пошаговая настройка общего раннера (Proxmox, Zephyr + ESP8266, два репозитория): в соседнем проекте **umbreon_zephyr** файл `docs/self-hosted-ci.md`, раздел **§3.6 ESP8266 RTOS SDK** и подраздел **«Один раннер на Zephyr и ESP8266»**.

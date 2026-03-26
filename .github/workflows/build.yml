@@ -27,8 +27,10 @@ jobs:
 
       - name: Build firmware
         run: |
-          set -euo pipefail
-          source "${HOME}/ESP8266_RTOS_SDK/export.sh"
+          set -eo pipefail
+          export IDF_PATH="${HOME}/ESP8266_RTOS_SDK"
+          set +u
+          source "${IDF_PATH}/export.sh"
           make all
           echo "ESP_BIN=${GITHUB_WORKSPACE}/build/umbreon_esp_web.bin" >> "$GITHUB_ENV"
 

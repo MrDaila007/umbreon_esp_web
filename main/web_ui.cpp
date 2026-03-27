@@ -49,6 +49,7 @@ button:active{background:#475569}
 .toast.ok{background:#15803d}.toast.err{background:#b91c1c}.toast.inf{background:#1d4ed8}
 .hid{display:none}
 .cb{font-size:18px;min-width:44px}
+#jC.jD{opacity:.3;pointer-events:none}
 .fs{font-size:11px;color:#64748b}
 #cLog{background:#020617;color:#22d3ee;font-family:monospace;font-size:11px;padding:6px;border-radius:4px;height:260px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #334155}
 #cLog .ct{color:#22d3ee}#cLog .cc{color:#a3e635}#cLog .cs{color:#f59e0b}#cLog .cr{color:#94a3b8}#cLog .cl{color:#c084fc}
@@ -222,8 +223,18 @@ button:active{background:#475569}
 <span id="dL" style="color:#ef4444;font-weight:600">LOCKED</span>
 </label>
 </div>
+<div style="display:flex;align-items:center;gap:8px">
+<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+<input type="checkbox" id="aC" disabled>
+<span style="color:#f59e0b;font-weight:600">Anti-Collision</span>
+</label>
+</div>
+<div style="display:flex;justify-content:center">
+<canvas id="jC" class="jD" width="200" height="200" style="width:min(200px,60vw);height:min(200px,60vw);border-radius:50%;background:#0f172a;border:2px solid #334155;touch-action:none;cursor:crosshair"></canvas>
+</div>
+<div style="text-align:center;font-size:11px;color:#64748b;margin-top:2px"><span id="jI">Joystick: 0, 0.0</span></div>
 <div class="sr"><label>Steer</label><input type="range" id="dS" min="-1000" max="1000" step="50" value="0" disabled><span class="sv" id="dSV">0</span></div>
-<div class="sr"><label>Speed</label><input type="range" id="dV" min="0" max="3.0" step="0.1" value="0" disabled><span class="sv" id="dVV">0.0</span></div>
+<div class="sr"><label>Speed</label><input type="range" id="dV" min="-3.0" max="3.0" step="0.1" value="0" disabled><span class="sv" id="dVV">0.0</span></div>
 <div class="bt">
 <button class="bg0" id="dG" onclick="dO()" disabled>Drive</button>
 <button class="bn" onclick="dX()">Release</button>
@@ -367,7 +378,7 @@ button:active{background:#475569}
 <div class="toast" id="T"></div>
 
 <script>
-var ws,fc=0,di=null,lc='';
+var ws,fc=0,di=null,lc='',gS=[],jA=false;
 var sn=4; // detected sensor count (4 or 6)
 // Sensor geometry configs: [angles_deg, lat_offsets, colors]
 var SN4={SD:[45,0,0,-45],SL:[.09,.04,-.04,-.09],SC:['#2ca02c','#1f77b4','#ff7f0e','#d62728'],LB:['Left','Front-Left','Front-Right','Right']};
@@ -458,7 +469,7 @@ else if(p.length===10)dSn(4); // default to 4+IMU
 fc++;
 Q('F').textContent='#'+fc;
 var sv=[];
-for(var i=0;i<sn;i++){sv[i]=parseInt(p[1+i]);var el=Q('s'+i);if(el)el.textContent=(sv[i]/10).toFixed(1)}
+for(var i=0;i<sn;i++){sv[i]=parseInt(p[1+i]);gS[i]=sv[i];var el=Q('s'+i);if(el)el.textContent=(sv[i]/10).toFixed(1)}
 var si=1+sn; // index after sensors
 Q('st').textContent=p[si];
 Q('sp').textContent=parseFloat(p[si+1]).toFixed(2)+' m/s';
@@ -601,14 +612,96 @@ Q('dS').oninput=function(){Q('dSV').textContent=this.value};
 Q('dV').oninput=function(){Q('dVV').textContent=parseFloat(this.value).toFixed(1)};
 function dT(en){
 S(en?'$DRVEN':'$DRVOFF');
-Q('dS').disabled=!en;Q('dV').disabled=!en;Q('dG').disabled=!en;
+Q('dS').disabled=!en;Q('dV').disabled=!en;Q('dG').disabled=!en;Q('aC').disabled=!en;
+Q('jC').className=en?'':'jD';
 Q('dL').textContent=en?'ENABLED':'LOCKED';
 Q('dL').style.color=en?'#22c55e':'#ef4444';
-if(!en)dX();
+if(!en){jA=false;jD(0,0);dX()}
 }
-function dO(){if(di||!Q('dE').checked)return;di=setInterval(function(){S('$DRV:'+Q('dS').value+','+Q('dV').value)},200)}
-function dX(){if(di){clearInterval(di);di=null}S('$DRV:0,0');dC()}
-function dC(){Q('dS').value=0;Q('dSV').textContent='0';Q('dV').value=0;Q('dVV').textContent='0.0'}
+function dO(){if(di||!Q('dE').checked)return;di=setInterval(function(){
+var st=parseInt(Q('dS').value),sp=parseFloat(Q('dV').value);
+if(Q('aC').checked&&gS.length>=sn){var r=cA(st,sp);st=r[0];sp=r[1]}
+S('$DRV:'+st+','+sp)
+},200)}
+function dX(){if(di){clearInterval(di);di=null}S('$DRV:0,0');dC();jD(0,0)}
+function dC(){Q('dS').value=0;Q('dSV').textContent='0';Q('dV').value=0;Q('dVV').textContent='0.0';Q('jI').textContent='Joystick: 0, 0.0'}
+
+// --- Joystick ---
+function jD(nx,ny){
+var c=Q('jC'),x=c.getContext('2d'),w=c.width,h=c.height,r=w/2;
+x.clearRect(0,0,w,h);
+x.strokeStyle='#334155';x.lineWidth=1;
+x.beginPath();x.arc(r,r,r-2,0,6.283);x.stroke();
+x.strokeStyle='#1e293b';x.lineWidth=1;
+x.beginPath();x.moveTo(r,4);x.lineTo(r,w-4);x.stroke();
+x.beginPath();x.moveTo(4,r);x.lineTo(w-4,r);x.stroke();
+x.strokeStyle='#1e293b';
+x.beginPath();x.arc(r,r,r*0.1,0,6.283);x.stroke();
+var kx=r+nx*(r-10),ky=r-ny*(r-10);
+x.fillStyle=jA?'#3b82f6':'#64748b';
+x.beginPath();x.arc(kx,ky,12,0,6.283);x.fill();
+x.strokeStyle='#e2e8f0';x.lineWidth=2;
+x.beginPath();x.arc(kx,ky,12,0,6.283);x.stroke();
+}
+function jP(e){
+var c=Q('jC'),b=c.getBoundingClientRect();
+var cx=b.width/2,cy=b.height/2;
+var dx=(e.clientX-b.left-cx)/cx,dy=(cy-(e.clientY-b.top))/cy;
+var d=Math.sqrt(dx*dx+dy*dy);
+if(d>1){dx/=d;dy/=d}
+if(d<0.1){dx=0;dy=0}
+return[dx,dy];
+}
+function jU(dx,dy){
+var st=Math.round(dx*1000/50)*50;
+st=Math.max(-1000,Math.min(1000,st));
+var sp=Math.round(dy*5)/10;
+sp=Math.max(-0.5,Math.min(0.5,sp));
+Q('dS').value=st;Q('dSV').textContent=st;
+Q('dV').value=sp;Q('dVV').textContent=sp.toFixed(1);
+Q('jI').textContent='Joystick: '+st+', '+sp.toFixed(1);
+jD(dx,dy);
+}
+(function(){
+var c=Q('jC');
+c.addEventListener('pointerdown',function(e){
+if(!Q('dE').checked)return;
+e.preventDefault();c.setPointerCapture(e.pointerId);
+jA=true;var p=jP(e);jU(p[0],p[1]);dO();
+});
+c.addEventListener('pointermove',function(e){
+if(!jA)return;var p=jP(e);jU(p[0],p[1]);
+});
+c.addEventListener('pointerup',function(e){
+if(!jA)return;jA=false;jU(0,0);jD(0,0);dX();
+});
+c.addEventListener('pointercancel',function(e){
+if(!jA)return;jA=false;jU(0,0);jD(0,0);dX();
+});
+})();
+jD(0,0);
+
+// --- Anti-Collision ---
+function cA(st,sp){
+var cfg=SC(),fMin=9999,lMin=9999,rMin=9999;
+for(var i=0;i<sn;i++){
+var d=gS[i]/10;
+if(d<=0||d>800)continue;
+if(cfg.SD[i]===0)fMin=Math.min(fMin,d);
+else if(cfg.SD[i]>0)lMin=Math.min(lMin,d);
+else rMin=Math.min(rMin,d);
+}
+if(sp>0){
+if(fMin<=10)sp=0;
+else if(fMin<=15)sp*=(fMin-10)/5;
+}
+if(lMin<=10){if(st<0)st=0;st+=200}
+else if(lMin<=15&&st<0){st=Math.round(st*(lMin-10)/5);st+=Math.round((15-lMin)/5*100)}
+if(rMin<=10){if(st>0)st=0;st-=200}
+else if(rMin<=15&&st>0){st=Math.round(st*(rMin-10)/5);st-=Math.round((15-rMin)/5*100)}
+st=Math.max(-1000,Math.min(1000,st));
+return[st,sp];
+}
 
 // --- Servo Cal ---
 var cm=40,cn2=90,cx=140,ca=90,cs=0;

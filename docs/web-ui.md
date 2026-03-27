@@ -80,13 +80,17 @@ Hardware test buttons:
 
 ### Manual Drive
 
-Slider-based manual control with safety lock:
+Manual control with safety lock, virtual joystick, and optional collision avoidance:
 
-1. Toggle safety lock to enable
-2. Use steering slider (-100 to +100)
-3. Use speed slider (0 to max)
-4. Commands sent as `$DRV:<steer>,<speed>`
-5. `$DRVEN` on enable, `$DRVOFF` on disable
+1. Toggle safety lock to enable controls
+2. **Virtual Joystick** — drag to drive: X axis = steering (-1000..1000), Y axis = speed (-0.5..0.5 m/s). Auto-sends commands while held, springs back to center on release
+3. **Sliders** — fine-grained control: steering (-1000..1000), speed (-3.0..3.0 m/s). Press "Drive" to start sending
+4. **Anti-Collision** checkbox — when enabled, uses live sensor readings to prevent crashes:
+   - Hard stop at 10 cm from a wall
+   - Speed reduction + steering correction at 15 cm
+   - Sensors classified by direction: front (0°), left (>0°), right (<0°)
+5. Commands sent as `$DRV:<steer>,<speed>` every 200 ms
+6. `$DRVEN` on enable, `$DRVOFF` on disable
 
 ### Debug Console
 

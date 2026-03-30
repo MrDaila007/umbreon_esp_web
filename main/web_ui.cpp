@@ -432,6 +432,7 @@ else tt('NAK: '+r,'err');
 else if(l.indexOf('$CFG:')===0)pC(l.slice(5));
 else if(l==='$STS:RUN')sR(1);
 else if(l==='$STS:MONITOR')sR(2);
+else if(l==='$STS:STARTING')sR(3);
 else if(l==='$STS:STOP')sR(0);
 else if(l.indexOf('$T:PTUNE')===0){aL(l);ptMsg(l)}
 else if(l.indexOf('$TR:PTUNE')===0||l.indexOf('$TR:IMC')===0||l.indexOf('$TR:PI,')===0){aL(l);ptRes(l)}
@@ -468,8 +469,8 @@ if(mOn)mU(parseInt(p[0]),sv,parseInt(p[si]),parseFloat(p[si+1]),yw,hi);
 }}}
 
 // --- RUN sub-state ---
-var RS_N=['CLEAR','BLOCKED','STUCK','REVERSE','WRONG_DIR'];
-var RS_B=['#15803d','#a16207','#c2410c','#b91c1c','#991b1b'];
+var RS_N=['CLEAR','BLOCKED','STUCK','REVERSE','WRONG_DIR','STALL'];
+var RS_B=['#15803d','#a16207','#c2410c','#b91c1c','#991b1b','#9333ea'];
 function pRUN(d){
 var p=d.split(',');if(p.length<5)return;
 var st=parseInt(p[0]),sk=parseInt(p[1]),tn=parseFloat(p[2]),hc=parseInt(p[3]),df=parseInt(p[4]);
@@ -485,7 +486,7 @@ var LB={FOD:'Front Obstacle',SOD:'Side Open',ACD:'All Close',CFD:'Close Front',
 KP:'PID Kp',KI:'PID Ki',KD:'PID Kd',MSP:'Min Spd \u00b5s',XSP:'Max Spd \u00b5s',BSP:'Min Rev \u00b5s',
 MNP:'Min Steer',XNP:'Max Steer',NTP:'Neutral',ENH:'Enc Holes',WDM:'Wheel Diam',
 LMS:'Loop ms',SPD1:'Spd Clear',SPD2:'Spd Block',SLW:'Spd Slew',KOP:'Kick %',KOM:'Kick ms',COE1:'Coef Clear',COE2:'Coef Block',
-WDD:'Wrong Dir',RCW:'Race CW',STK:'Stuck Thr',IMR:'IMU Rot',SVR:'Srv Rev',CAL:'Calibrated',BEN:'Bat Monitor',BML:'Bat Mult',BLV:'Bat Low V',IMU:'IMU',DBG:'Debug',SNS:'Sensors',SMX:'Max Range'};
+WDD:'Wrong Dir',RCW:'Race CW',STK:'Stuck Thr',STL:'Stall Thr',IMR:'IMU Rot',SVR:'Srv Rev',CAL:'Calibrated',TGF:'Glitch \u00b5s',BEN:'Bat Monitor',BML:'Bat Mult',BLV:'Bat Low V',IMU:'IMU',DBG:'Debug',SNS:'Sensors',SMX:'Max Range'};
 var FL={KP:1,KI:1,KD:1,WDM:1,SPD1:1,SPD2:1,SLW:1,COE1:1,COE2:1,WDD:1,BML:1,BLV:1};
 var BL={RCW:1,IMR:1,SVR:1,CAL:1,BEN:1,IMU:1,DBG:1};
 var RO={IMU:1,DBG:1,SNS:1,SMX:1},OR={};
@@ -494,8 +495,8 @@ var GR=[
 ['\u23f1 Speed','SPD1','SPD2','SLW','KOP','KOM','MSP','XSP','BSP'],
 ['\u2699 PID','KP','KI','KD'],
 ['\u21c4 Steering','MNP','XNP','NTP','COE1','COE2'],
-['\u23f2 Loop','LMS','STK','WDD'],
-['\u2638 Encoder','ENH','WDM'],
+['\u23f2 Loop','LMS','STK','STL','WDD'],
+['\u2638 Encoder','ENH','WDM','TGF'],
 ['\u2611 Flags','RCW','IMR','SVR','CAL','IMU','DBG'],
 ['\u26a1 Battery','BEN','BML','BLV'],
 ['\u2b50 Sensor','SNS','SMX']
@@ -589,7 +590,7 @@ x.fillStyle='#94a3b8';x.font='10px monospace';x.fillText(mV.toFixed(2)+' m/s',4,
 }
 function ptAp(m){var c=m==='imc'?ptIMC:ptPI;if(!c){tt('No results','err');return}S('$SET:KP='+c.kp+',KI='+c.ki+',KD='+(c.kd||'0'));tt('Applied '+m.toUpperCase(),'ok')}
 function ptDn(){Q('ptSt').textContent='Done';Q('ptPh').textContent='done'}
-function sR(r){var b=Q('R');b.textContent=r===2?'MON':r?'RUN':'STOP';b.className='bg '+(r===2?'mon':r?'run':'stp');var rs=Q('runSec');if(rs){if(r===1)rs.classList.remove('hid');else rs.classList.add('hid')}}
+function sR(r){var b=Q('R');b.textContent=r===3?'STARTING':r===2?'MON':r===1?'RUN':'STOP';b.className='bg '+(r===3?'mon':r===2?'mon':r===1?'run':'stp');var rs=Q('runSec');if(rs){if(r===1)rs.classList.remove('hid');else rs.classList.add('hid')}}
 function tog(id){
 Q(id).classList.toggle('hid');Q(id+'H').classList.toggle('open');
 if(id==='map')mOn=!Q('map').classList.contains('hid');

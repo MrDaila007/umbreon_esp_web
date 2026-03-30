@@ -25,15 +25,26 @@ Fields are comma-separated integers. The number of sensor fields varies (4 or 6 
 
 | Message | Description |
 |---------|-------------|
-| `$STS:RUN` | Car is running |
+| `$STS:RUN` | Car is running (autonomous) |
 | `$STS:STOP` | Car is stopped |
+| `$STS:MONITOR` | Monitor mode (sensors + servo, no motor) |
+| `$STS:STARTING` | Countdown active (5 s before autonomous) |
 | `$PONG` | Response to `$PING` |
 | `$ACK` | Command accepted |
 | `$NAK:<msg>` | Command rejected with reason |
 | `$CFG:<params>` | Configuration values response |
 | `$T:<data>` | Test output |
+| `$TR:<data>` | Test result data |
+| `$TDONE:<name>` | Test complete |
 | `$BAT:<voltage>` | Battery voltage |
 | `$RSSI:<dBm>` | WiFi signal strength |
+| `$RUN:<state>,<stuck>,<turns>,<clear>,<diff>` | Run sub-state telemetry (every 200 ms) |
+| `$L:<text>` | Debug log line (when `$LOG:ON` active) |
+| `$DIAG:<params>` | Diagnostics response |
+| `$SNS:<params>` | Sensor details response |
+| `$IMU:<params>` | IMU status response |
+| `$PID:<params>` | PID controller state |
+| `$SYS:<params>` | System info response |
 | `$TRK:<data>` | Track data |
 | `$TDONE:<info>` | Track operation complete |
 
@@ -43,15 +54,25 @@ Fields are comma-separated integers. The number of sensor fields varies (4 or 6 
 
 | Command | Description |
 |---------|-------------|
-| `$START` | Start autonomous driving |
+| `$START` | Start autonomous driving (5 s countdown) |
 | `$STOP` | Stop car |
+| `$MONITOR` | Monitor mode (sensors + servo, no motor) |
 | `$PING` | Connectivity check |
-| `$STATUS` | Request status |
+| `$STATUS` | Request status (`$STS:RUN/STOP/MONITOR/STARTING`) |
 | `$GET` | Request configuration |
 | `$SET:<params>` | Set configuration parameters |
 | `$SAVE` | Save config to flash |
 | `$LOAD` | Load config from flash |
 | `$RST` | Reset to defaults |
+| `$BAT` | Request battery voltage |
+| `$DIAG` | Request diagnostics |
+| `$SNS` | Request sensor details |
+| `$IMU` | Request IMU status |
+| `$PID` | Request PID state |
+| `$SYS` | Request system info |
+| `$LOG:ON` | Enable debug log forwarding (`$L:` prefix) |
+| `$LOG:OFF` | Disable debug log forwarding |
+| `$HELP` | List available commands |
 
 #### Test Commands
 

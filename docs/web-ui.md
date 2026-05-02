@@ -111,6 +111,69 @@ Real-time log viewer:
 
 The UI automatically reconnects to WebSocket every 2 seconds if the connection is lost. A visual indicator shows connection status.
 
+## UI Manifest
+
+The controller (Pico/Zephyr) can declare which sections and fields the web
+client should show by emitting a `$UI:` manifest line at boot. The ESP bridge
+forwards it verbatim; all show/hide logic runs in the browser.
+
+### Protocol
+
+```
+$UI:sec=<csv>;fld=<csv>
+```
+
+- **`sec`** — comma-separated section IDs to make visible. Anything not listed
+  is hidden. Empty (`sec=`) means show all sections.
+- **`fld`** — comma-separated field IDs to make visible. Covers sensor tiles,
+  telemetry items, and header chips. Empty (`fld=`) means show all fields.
+
+Send `$UICAP` from the web client (or any TCP client) to ask the controller to
+re-send its manifest. The web client sends `$UICAP` automatically on each
+WebSocket connect, so late-joining tabs always converge.
+
+**Backward compatibility**: if no `$UI:` message ever arrives, the UI shows
+every section and field (current behavior).
+
+### Section IDs
+
+| ID         | UI element                                         |
+|------------|----------------------------------------------------|
+| `sensors`  | Sensor distance grid + Speed / Target / Steer row  |
+| `imu`      | Yaw / Heading row (inside Sensors section)         |
+| `run`      | Run sub-state strip (visible only while running)   |
+| `map`      | Track Map canvas + zoom/pan controls               |
+| `track`    | Track Record / Save / Load / Race buttons (in Map) |
+| `ctrl`     | START / STOP / MONITOR / PING / STATUS bar         |
+| `settings` | Settings panel (Read / Write / Save EE)            |
+| `tests`    | Hardware Tests panel                               |
+| `drive`    | Manual Drive panel                                 |
+| `servocal` | Servo Calibration wizard                           |
+| `escmsp`   | ESC Min Speed slider                               |
+| `console`  | Debug Console                                      |
+
+### Field IDs
+
+| ID        | Element                                   |
+|-----------|-------------------------------------------|
+| `s0`–`s5` | Individual sensor distance tiles          |
+| `speed`   | Current speed value in Sensors row        |
+| `target`  | Target speed value in Sensors row         |
+| `steer`   | Steering value in Sensors row             |
+| `yaw`     | Yaw rate value in IMU row                 |
+| `heading` | Heading value in IMU row                  |
+| `battery` | Battery voltage chip in header            |
+| `rssi`    | RSSI signal chip in header                |
+| Any config key (`KP`, `MSP`, …) | Corresponding settings row |
+
+### Example
+
+A 4-sensor build without IMU, battery monitor, or track learning:
+
+```
+$UI:sec=sensors,run,ctrl,settings,tests,drive,console;fld=s0,s1,s2,s3,steer,speed,target
+```
+
 ## Design
 
 - Dark theme with Tailwind-inspired utility classes

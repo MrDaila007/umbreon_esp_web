@@ -47,6 +47,7 @@ Fields are comma-separated integers. The number of sensor fields varies (4 or 6 
 | `$SYS:<params>` | System info response |
 | `$TRK:<data>` | Track data |
 | `$TDONE:<info>` | Track operation complete |
+| `$UI:sec=<csv>;fld=<csv>` | UI manifest — declares which sections and fields the web client should display (see [Web UI](web-ui.md#ui-manifest)) |
 
 ### Outbound (ESP -> Pico)
 
@@ -73,6 +74,7 @@ Fields are comma-separated integers. The number of sensor fields varies (4 or 6 
 | `$LOG:ON` | Enable debug log forwarding (`$L:` prefix) |
 | `$LOG:OFF` | Disable debug log forwarding |
 | `$HELP` | List available commands |
+| `$UICAP` | Request the controller re-send its `$UI:` manifest |
 
 #### Test Commands
 

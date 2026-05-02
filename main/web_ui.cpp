@@ -72,14 +72,14 @@ button:active{background:#475569}
 <span class="dot off" id="D"></span>
 <span id="W">Connecting</span>
 <span id="nI" style="font-size:11px;color:#64748b;padding:2px 6px;background:#0f172a;border-radius:4px"></span>
-<span id="rssi" style="font-size:11px;font-weight:600;padding:2px 6px;background:#0f172a;border-radius:4px" class="hid"></span>
+<span id="rssi" data-uifld="rssi" style="font-size:11px;font-weight:600;padding:2px 6px;background:#0f172a;border-radius:4px" class="hid"></span>
 <span class="bg stp" id="R">STOP</span>
-<span id="bV" style="font-weight:600" class="hid">--V</span>
+<span id="bV" data-uifld="battery" style="font-weight:600" class="hid">--V</span>
 <span style="color:#64748b" id="F">#0</span>
 </div>
 </header>
 
-<section>
+<section data-uikey="sensors">
 <div id="sG" class="g4">
 <div class="sb"><div class="v" id="s0">&mdash;</div><div class="l">Left (cm)</div></div>
 <div class="sb"><div class="v" id="s1">&mdash;</div><div class="l">Front-Left</div></div>
@@ -89,17 +89,17 @@ button:active{background:#475569}
 <div class="sb hid" id="s5w"><div class="v" id="s5">&mdash;</div><div class="l">Hard-Left</div></div>
 </div>
 <div class="ir">
-<span class="l">Speed</span><span class="v" id="sp">&mdash;</span>
-<span class="l">Target</span><span class="v" id="tg">&mdash;</span>
-<span class="l">Steer</span><span class="v" id="st">&mdash;</span>
+<span class="l">Speed</span><span class="v" id="sp" data-uifld="speed">&mdash;</span>
+<span class="l">Target</span><span class="v" id="tg" data-uifld="target">&mdash;</span>
+<span class="l">Steer</span><span class="v" id="st" data-uifld="steer">&mdash;</span>
 </div>
-<div class="ir hid" id="iR">
-<span class="l">Yaw</span><span class="v" id="yw">&mdash;</span>
-<span class="l">Heading</span><span class="v" id="hd">&mdash;</span>
+<div class="ir hid" id="iR" data-uikey="imu">
+<span class="l">Yaw</span><span class="v" id="yw" data-uifld="yaw">&mdash;</span>
+<span class="l">Heading</span><span class="v" id="hd" data-uifld="heading">&mdash;</span>
 </div>
 </section>
 
-<section id="runSec" class="hid">
+<section id="runSec" class="hid" data-uikey="run">
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <span style="font-size:11px;color:#94a3b8;font-weight:600">STATE</span>
 <span id="runSt" style="font-size:13px;font-weight:700;padding:3px 10px;border-radius:4px;background:#15803d;color:#fff">CLEAR</span>
@@ -114,7 +114,7 @@ button:active{background:#475569}
 </div>
 </section>
 
-<section>
+<section data-uikey="map">
 <h2 id="mapH" class="open" onclick="tog('map')">Track Map</h2>
 <div id="map">
 <canvas id="mC" style="width:100%;height:220px;background:#020617;border-radius:4px;touch-action:none"></canvas>
@@ -130,7 +130,7 @@ button:active{background:#475569}
 </label>
 <span class="fs" id="mP">0, 0</span>
 </div>
-<div style="display:flex;gap:4px;margin-top:6px;align-items:center;flex-wrap:wrap">
+<div data-uikey="track" style="display:flex;gap:4px;margin-top:6px;align-items:center;flex-wrap:wrap">
 <span class="fs" style="font-weight:600">Track:</span>
 <button onclick="tL('LEARN')" style="padding:4px 8px;font-size:11px" class="bg0">Record</button>
 <button onclick="tL('STOP')" style="padding:4px 8px;font-size:11px" class="bn">Stop</button>
@@ -145,7 +145,7 @@ button:active{background:#475569}
 </div>
 </section>
 
-<section>
+<section data-uikey="ctrl">
 <div class="bt">
 <button class="bg0" onclick="S('$START')">&#9654; START</button>
 <button class="bn" onclick="S('$STOP')">&#9632; STOP</button>
@@ -155,7 +155,7 @@ button:active{background:#475569}
 </div>
 </section>
 
-<section>
+<section data-uikey="settings">
 <h2 id="settH" onclick="tog('sett')">Settings</h2>
 <div id="sett" class="hid">
 <div class="bt">
@@ -169,7 +169,7 @@ button:active{background:#475569}
 </div>
 </section>
 
-<section>
+<section data-uikey="tests">
 <h2 id="testH" onclick="tog('test')">Hardware Tests</h2>
 <div id="test" class="hid">
 <div class="tb">
@@ -212,7 +212,7 @@ button:active{background:#475569}
 </div>
 </section>
 
-<section>
+<section data-uikey="drive">
 <h2 id="drvH" onclick="tog('drv')">Manual Drive</h2>
 <div id="drv" class="hid">
 <div style="display:flex;flex-direction:column;gap:10px">
@@ -234,7 +234,7 @@ button:active{background:#475569}
 </div>
 </section>
 
-<section>
+<section data-uikey="servocal">
 <h2 id="calH" onclick="tog('cal')">Servo Calibration</h2>
 <div id="cal" class="hid">
 <div id="cI">
@@ -280,7 +280,7 @@ button:active{background:#475569}
 </div>
 </section>
 
-<section>
+<section data-uikey="escmsp">
 <h2 id="escH" onclick="tog('esc')">ESC Min Speed</h2>
 <div id="esc" class="hid">
 <div class="sr"><label>ESC</label><input type="range" id="eS" min="1500" max="1700" step="1" value="1540"><span class="sv" id="eV">1540</span></div>
@@ -293,7 +293,7 @@ button:active{background:#475569}
 </div>
 </section>
 
-<section>
+<section data-uikey="console">
 <h2 id="conH" class="open" onclick="tog('con')">Debug Console</h2>
 <div id="con">
 <div class="cF">
@@ -377,7 +377,7 @@ function Q(id){return document.getElementById(id)}
 
 function cn(){
 ws=new WebSocket('ws://'+location.hostname+':81/');
-ws.onopen=function(){Q('D').className='dot on';Q('W').textContent='Connected';Q('nI').textContent=location.hostname};
+ws.onopen=function(){Q('D').className='dot on';Q('W').textContent='Connected';Q('nI').textContent=location.hostname;S('$UICAP')};
 ws.onclose=function(){Q('D').className='dot off';Q('W').textContent='Reconnecting';setTimeout(cn,2000)};
 ws.onmessage=function(e){pr(e.data)};
 }
@@ -444,6 +444,7 @@ else if(l.indexOf('$BAT:')===0){var bv=parseFloat(l.slice(5));if(bv>0.5){Q('bV')
 else if(l.indexOf('$TRK:')===0)tP(l.slice(5))
 else if(l.indexOf('$RUN:')===0)pRUN(l.slice(5))
 else if(l.indexOf('$RSSI:')===0)uRSSI(parseInt(l.slice(6)))
+else if(l.indexOf('$UI:')===0)uiApply(l)
 }else{
 var p=l.split(',');
 // Dynamic field count: ms + sn sensors + steer + speed + target [+ yaw + heading]
@@ -800,6 +801,73 @@ else{bars='\u2582\u2007\u2007\u2007';color='#991b1b'}
 el.innerHTML='<span style="letter-spacing:-1px">'+bars+'</span> '+r+'dBm';
 el.style.color=color;
 }
+
+// --- UI Manifest ---
+// $UI:sec=<csv>;fld=<csv>  — sent by the controller at boot or on $UICAP request.
+// Sections listed in `sec` are shown; everything else is hidden.
+// Fields listed in `fld` (sensor tiles, telemetry items, header chips) are
+// shown; everything else is hidden.  Both are no-ops when the respective
+// list is empty (show all).  No manifest at all = show everything (backward compat).
+var uiSec=null,uiFld=null;
+
+function uiApply(line){
+// parse  $UI:sec=a,b,c;fld=x,y,z
+var sec=null,fld=null;
+var m=line.slice(4); // strip "$UI:"
+m.split(';').forEach(function(part){
+  var kv=part.split('=');
+  if(kv[0]==='sec')sec=kv[1]?kv[1].split(','):[];
+  else if(kv[0]==='fld')fld=kv[1]?kv[1].split(','):[];
+});
+uiSec=sec?new Set(sec):null;
+uiFld=fld?new Set(fld):null;
+
+// Apply section visibility
+document.querySelectorAll('[data-uikey]').forEach(function(el){
+  var key=el.getAttribute('data-uikey');
+  // data-uihidden separates manifest-hide from user-collapse
+  if(uiSec&&uiSec.size>0){
+    if(!uiSec.has(key)){el.dataset.uihidden='1';el.classList.add('hid')}
+    else{el.dataset.uihidden='0';el.classList.remove('hid')}
+  }else{
+    el.dataset.uihidden='0';el.classList.remove('hid');
+  }
+});
+
+// Apply field visibility (header chips + telemetry spans)
+document.querySelectorAll('[data-uifld]').forEach(function(el){
+  var key=el.getAttribute('data-uifld');
+  if(uiFld&&uiFld.size>0){
+    if(!uiFld.has(key))el.classList.add('hid');
+    else el.classList.remove('hid');
+  }else{
+    el.classList.remove('hid');
+  }
+});
+
+// Apply field visibility for sensor tiles (s0..s5 -> their wrapper divs)
+for(var i=0;i<6;i++){
+  var sw=Q('s'+i+'w');if(!sw)continue;
+  if(uiFld&&uiFld.size>0){
+    if(!uiFld.has('s'+i))sw.classList.add('hid');
+    else sw.classList.remove('hid');
+  }
+}
+}
+
+// Filter settings rows when manifest has an active field list
+var _origPC=pC;
+pC=function(cfg){
+_origPC(cfg);
+if(!uiFld||uiFld.size===0)return;
+// Hide setting rows whose key is not in the field list
+var rows=Q('P').querySelectorAll('.pi');
+rows.forEach(function(row){
+  var inp=row.querySelector('input');if(!inp)return;
+  var k=inp.id.slice(2);
+  if(!uiFld.has(k))row.classList.add('hid');
+});
+};
 
 cn();
 setInterval(function(){S('$BAT');S('$RSSI')},5000);

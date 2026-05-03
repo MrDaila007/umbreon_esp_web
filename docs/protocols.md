@@ -49,6 +49,54 @@ Fields are comma-separated integers. The number of sensor fields varies (4 or 6 
 | `$TDONE:<info>` | Track operation complete |
 | `$UI:sec=<csv>;fld=<csv>` | UI manifest — declares which sections and fields the web client should display (see [Web UI](web-ui.md#ui-manifest)) |
 
+#### Configuration Keys (`$CFG:` / `$SET:`)
+
+`$GET` returns `$CFG:KEY=VAL,KEY=VAL,...`. `$SET:KEY=VAL[,KEY=VAL,...]` writes one or more keys atomically.
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `FOD` | int | Front obstacle distance threshold (cm) |
+| `SOD` | int | Side open distance threshold (cm) |
+| `ACD` | int | All-close distance threshold (cm) |
+| `CFD` | int | Close-front distance threshold (cm) |
+| `SPD1` | float | Cruise speed — clear path (m/s) |
+| `SPD2` | float | Cruise speed — blocked path (m/s) |
+| `SLW` | float | Speed setpoint slew rate (m/s per loop); 0 = instant |
+| `COE1` | float | Speed coefficient — clear |
+| `COE2` | float | Speed coefficient — blocked |
+| `KOP` | int | Start kick magnitude (% of ESC span); 0 = off |
+| `KOM` | int | Start kick duration (ms) |
+| `MSP` | int | ESC min forward speed (µs) |
+| `XSP` | int | ESC max speed (µs) |
+| `BSP` | int | ESC min reverse speed (µs) |
+| `RVT` | int | Reverse time during recovery maneuver (ms) |
+| `TRT` | int | Turn time during recovery maneuver (ms) |
+| `RVS` | float | Reverse speed during recovery (m/s) |
+| `KP` | float | Speed PID proportional gain |
+| `KI` | float | Speed PID integral gain |
+| `KD` | float | Speed PID derivative gain |
+| `MNP` | int | Servo min angle (°) |
+| `NTP` | int | Servo neutral angle (°) |
+| `XNP` | int | Servo max angle (°) |
+| `LMS` | int | Main loop period (ms) |
+| `STK` | int | Stuck counter threshold (loops) |
+| `STL` | int | Stall counter threshold (loops) |
+| `WDD` | float | Wrong-direction speed threshold (m/s) |
+| `ENH` | int | Encoder holes per revolution |
+| `WDM` | float | Wheel diameter (m) |
+| `TGF` | int | Tachometer glitch filter (µs) |
+| `RCW` | bool | Race direction clockwise (1/0) |
+| `IMR` | bool | IMU rotation inverted (1/0) |
+| `SVR` | bool | Servo direction reversed (1/0) |
+| `CAL` | bool | Servo calibrated flag (1/0) |
+| `BEN` | bool | Battery monitor enabled (1/0) |
+| `BML` | float | Battery voltage multiplier |
+| `BLV` | float | Battery low voltage threshold (V) |
+| `IMU` | bool (RO) | IMU present |
+| `DBG` | bool (RO) | Debug mode |
+| `SNS` | int (RO) | Sensor count (4 or 6) |
+| `SMX` | int (RO) | Sensor max range (cm) |
+
 ### Outbound (ESP -> Pico)
 
 #### Control Commands

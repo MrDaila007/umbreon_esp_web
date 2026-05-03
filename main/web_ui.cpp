@@ -466,7 +466,7 @@ Q('st').textContent=p[si];
 Q('sp').textContent=parseFloat(p[si+1]).toFixed(2)+' m/s';
 Q('tg').textContent=parseFloat(p[si+2]).toFixed(1)+' m/s';
 var hi=p.length>=sn+6,yw=0;
-if(hi){yw=parseFloat(p[si+3]);Q('iR').classList.remove('hid');Q('yw').textContent=yw.toFixed(1)+'\u00b0/s';Q('hd').textContent=parseFloat(p[si+4]).toFixed(1)+'\u00b0'}
+if(hi){yw=parseFloat(p[si+3]);var imuOk=!(uiSec&&uiSec.size&&!uiSec.has('imu'));if(imuOk)Q('iR').classList.remove('hid');Q('yw').textContent=yw.toFixed(1)+'\u00b0/s';Q('hd').textContent=parseFloat(p[si+4]).toFixed(1)+'\u00b0'}
 if(mOn)mU(parseInt(p[0]),sv,parseInt(p[si]),parseFloat(p[si+1]),yw,hi);
 }}}
 
@@ -488,8 +488,9 @@ var LB={FOD:'Front Obstacle',SOD:'Side Open',ACD:'All Close',CFD:'Close Front',
 KP:'PID Kp',KI:'PID Ki',KD:'PID Kd',MSP:'Min Spd \u00b5s',XSP:'Max Spd \u00b5s',BSP:'Min Rev \u00b5s',
 MNP:'Min Steer',XNP:'Max Steer',NTP:'Neutral',ENH:'Enc Holes',WDM:'Wheel Diam',
 LMS:'Loop ms',SPD1:'Spd Clear',SPD2:'Spd Block',SLW:'Spd Slew',KOP:'Kick %',KOM:'Kick ms',COE1:'Coef Clear',COE2:'Coef Block',
-WDD:'Wrong Dir',RCW:'Race CW',STK:'Stuck Thr',STL:'Stall Thr',IMR:'IMU Rot',SVR:'Srv Rev',CAL:'Calibrated',TGF:'Glitch \u00b5s',BEN:'Bat Monitor',BML:'Bat Mult',BLV:'Bat Low V',IMU:'IMU',DBG:'Debug',SNS:'Sensors',SMX:'Max Range'};
-var FL={KP:1,KI:1,KD:1,WDM:1,SPD1:1,SPD2:1,SLW:1,COE1:1,COE2:1,WDD:1,BML:1,BLV:1};
+WDD:'Wrong Dir',RCW:'Race CW',STK:'Stuck Thr',STL:'Stall Thr',IMR:'IMU Rot',SVR:'Srv Rev',CAL:'Calibrated',TGF:'Glitch \u00b5s',BEN:'Bat Monitor',BML:'Bat Mult',BLV:'Bat Low V',IMU:'IMU',DBG:'Debug',SNS:'Sensors',SMX:'Max Range',
+RVT:'Rev Time ms',TRT:'Turn Time ms',RVS:'Rev Speed m/s'};
+var FL={KP:1,KI:1,KD:1,WDM:1,SPD1:1,SPD2:1,SLW:1,COE1:1,COE2:1,WDD:1,BML:1,BLV:1,RVS:1};
 var BL={RCW:1,IMR:1,SVR:1,CAL:1,BEN:1,IMU:1,DBG:1};
 var RO={IMU:1,DBG:1,SNS:1,SMX:1},OR={};
 var GR=[
@@ -498,6 +499,7 @@ var GR=[
 ['\u2699 PID','KP','KI','KD'],
 ['\u21c4 Steering','MNP','XNP','NTP','COE1','COE2'],
 ['\u23f2 Loop','LMS','STK','STL','WDD'],
+['\u21a9 Recovery','RVT','TRT','RVS'],
 ['\u2638 Encoder','ENH','WDM','TGF'],
 ['\u2611 Flags','RCW','IMR','SVR','CAL','IMU','DBG'],
 ['\u26a1 Battery','BEN','BML','BLV'],
@@ -843,10 +845,16 @@ m.split(';').forEach(function(part){
 });
 uiSec=sec?new Set(sec):null;
 uiFld=fld?new Set(fld):null;
+// Sync map compute flag with manifest
+if(uiSec&&uiSec.size>0)mOn=uiSec.has('map');
+else mOn=!Q('map').classList.contains('hid');
 
 // Apply section visibility
+// 'run' is always controlled by sR() based on car state, never by manifest
+var UI_NO_MANIFEST=['run'];
 document.querySelectorAll('[data-uikey]').forEach(function(el){
   var key=el.getAttribute('data-uikey');
+  if(UI_NO_MANIFEST.indexOf(key)>=0)return;
   // data-uihidden separates manifest-hide from user-collapse
   if(uiSec&&uiSec.size>0){
     if(!uiSec.has(key)){el.dataset.uihidden='1';el.classList.add('hid')}

@@ -558,7 +558,7 @@ else tt('No changes','err');
 }
 
 var simpleMode=false;
-var SIMPLE_KEYS={FOD:1,SPD1:1,SPD2:1,COE1:1,COE2:1};
+var SIMPLE_KEYS={FOD:1,MSP:1,SPD1:1,SPD2:1,KP:1,KD:1,COE1:1,COE2:1};
 function applySimpleFilter(){
 var rows=Q('P').querySelectorAll('.pi');
 rows.forEach(function(row){

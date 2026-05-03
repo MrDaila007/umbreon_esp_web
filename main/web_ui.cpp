@@ -164,6 +164,7 @@ button:active{background:#475569}
 <button onclick="S('$SAVE')">Save EE</button>
 <button onclick="S('$LOAD');setTimeout(function(){S('$GET')},300)">Load EE</button>
 <button onclick="S('$RST');setTimeout(function(){S('$GET')},300)">Reset</button>
+<button id="smBtn" onclick="toggleSimple()" style="margin-left:8px;background:#7c3aed">Simple</button>
 </div>
 <div class="pm" id="P"><div class="fs" style="grid-column:1/-1;padding:8px 0">Click Read to load settings</div></div>
 </div>
@@ -553,6 +554,27 @@ a.push(k+'='+nv);
 if(a.length){S('$SET:'+a.join(','));tt('Writing '+a.length+' params','inf')}
 else tt('No changes','err');
 }
+
+var simpleMode=false;
+var SIMPLE_KEYS={FOD:1,SPD1:1,SPD2:1,COE1:1,COE2:1};
+function applySimpleFilter(){
+var rows=Q('P').querySelectorAll('.pi');
+rows.forEach(function(row){
+var inp=row.querySelector('input');if(!inp)return;
+var k=inp.id.slice(2);
+if(simpleMode&&!SIMPLE_KEYS[k])row.classList.add('hid');
+else if(!row.dataset.uihidden)row.classList.remove('hid');
+});
+}
+function toggleSimple(){
+simpleMode=!simpleMode;
+var btn=Q('smBtn');
+btn.textContent=simpleMode?'Advanced':'Simple';
+btn.style.background=simpleMode?'#b45309':'#7c3aed';
+applySimpleFilter();
+}
+var _wPorigPC=pC;
+pC=function(cfg){_wPorigPC(cfg);applySimpleFilter();};
 
 function mt(n){if(confirm('Motor will spin! OK?'))S('$TEST:'+n)}
 function aL(l){var e=Q('log');e.textContent+=l+'\n';e.scrollTop=e.scrollHeight}
